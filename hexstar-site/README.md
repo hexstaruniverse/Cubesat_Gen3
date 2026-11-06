@@ -22,10 +22,25 @@ Any static host works (Netlify, Vercel, GitHub Pages, cPanel, S3, ...). Upload t
 - `docs/`: datasheet PDFs linked from the Datasheets section.
 - `tools/`: the Python scripts that generated the assets (Gerber rasteriser, component layout, datasheets). They need `numpy`, `opencv-python`, `openpyxl` and `reportlab`. Edit the input/output paths at the top of each script before running.
 
+## Pre-orders and payments (Razorpay)
+`checkout.html` collects contact details, shipping and billing addresses, and optional business details (company name, GSTIN). It then opens Razorpay's secure checkout. Card, UPI and netbanking details are entered on Razorpay, never on this site.
+
+The server side is three small Vercel functions in `api/`:
+- `api/create-order.js`: validates the form, works out the price on the server, and creates a Razorpay order. Customer details are saved in the order's notes, so you'll see them in your Razorpay dashboard.
+- `api/verify.js`: checks the Razorpay payment signature before showing the success screen.
+- `api/geo.js`: returns the visitor's country, used to pick ₹ or $.
+
+Prices, the ₹2,000 booking amount and the rate (1 USD = 115 INR) are set in `api/_shop.js`. Change them there and in the page text.
+
+**Setup (one time):** in Vercel, open the project, go to Settings → Environment Variables, and add:
+- `RAZORPAY_KEY_ID`: your key id (starts with `rzp_live_` or `rzp_test_`)
+- `RAZORPAY_KEY_SECRET`: your key secret
+
+Then redeploy. Use test keys first to try a payment, then switch to live keys. For USD payments, international payments must be enabled on your Razorpay account.
+
 ## Things to edit
-- Pre-order / payment links: `PREORDER_LINKS` near the top of the main `<script>` in `index.html`.
 - Prices, kit contents, Gen 1 / Gen 2 cards: the `#kits` section in `index.html`.
 - Hotspot text: `HS` in `tools/comps.py` (then re-run it), or edit `assets/boards.json` directly.
 
 ## Hosting notes
-The datasheet buttons use the claude.ai artifact save prompt when that's available. On a normal website they open the PDF in a new tab. To force a download instead, add a `download` attribute to the `<a class="doc">` links.
+The checkout needs the `api/` functions, so host on Vercel (or any platform that runs Node serverless functions). The datasheet buttons use the claude.ai artifact save prompt when that's available. On a normal website they open the PDF in a new tab. To force a download instead, add a `download` attribute to the `<a class="doc">` links.

@@ -104,8 +104,9 @@ h1 .o,h2 .o{color:var(--mute)}
 /* kits */
 
 .sw{display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:22px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--mute)}
-.sw span{padding:6px 12px;border:1px solid var(--line);border-radius:999px}
-.sw span.on{background:var(--fg);color:#000;border-color:var(--fg)}
+.sw button{font:inherit;color:inherit;background:none;cursor:pointer;padding:8px 14px;border:1px solid var(--line);border-radius:999px;transition:all .2s}
+.sw button:hover{border-color:rgba(255,255,255,.5)}
+.sw button.on{background:var(--fg);color:#000;border-color:var(--fg)}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);margin-top:40px;border:1px solid var(--line);border-radius:18px;overflow:hidden}
 .kit{padding:30px 28px 28px;display:flex;flex-direction:column;border-left:1px solid var(--line);background:rgba(10,10,10,.85);position:relative}
 .kit:first-child{border-left:0}
@@ -131,7 +132,7 @@ footer{position:relative;z-index:10;background:#000;border-top:1px solid var(--l
 .gs-head{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end}
 .gs-head .lede{margin:0}
 .gpin{position:relative;margin-top:30px}
-.stage{position:sticky;top:12vh;margin:0 auto;width:100%;aspect-ratio:16/9;max-height:80vh;overflow:hidden}
+.stage{position:sticky;top:0;height:100vh;width:100vw;margin-left:calc(50% - 50vw);overflow:hidden}
 .stage .dash{visibility:hidden;will-change:transform}
 .glare{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,.02) 28%,transparent 42%,transparent 70%,rgba(255,255,255,.03) 100%)}
 .gs-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:70px}
@@ -189,7 +190,7 @@ footer{position:relative;z-index:10;background:#000;border-top:1px solid var(--l
 .book-r li b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--fg);color:#000;font-size:13px;font-weight:600;flex:none}
 .book-r em{font-style:normal;font-weight:600;color:#fff}
 .today{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:12px 14px;border-radius:10px;background:var(--fg);color:#000}
-.today span{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase}.today b{font-size:24px;font-weight:600}
+.today>span{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase}.today b{font-size:24px;font-weight:600}
 .kit .p .full{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin-bottom:4px;font-weight:400}
 .kit .p{flex-direction:column;align-items:flex-start;gap:0!important;font-size:30px!important}
 .kit .p small{font-size:15px;color:var(--mute);font-weight:400}
@@ -213,7 +214,6 @@ footer{align-items:center}
 @media (max-width:820px){
   .blk{padding:12vh 16px 30px}#ground{padding-top:18vh}
   .gs-head{grid-template-columns:1fr;gap:18px}
-  .stage{aspect-ratio:4/3.4;margin-top:20px}
   .book{grid-template-columns:1fr;padding:22px 18px;gap:20px}
   .gs-steps{grid-template-columns:1fr;gap:18px;margin-top:40px}
   .gens{grid-template-columns:1fr;margin-top:50px}
@@ -264,7 +264,7 @@ footer{align-items:center}
   </a>
   <div class="links">
     <a href="#s0" data-s="0">OVERVIEW</a><a href="#s1" data-s="1">INSIDE</a><a href="#s3" data-s="3">BOARDS</a><a href="#ground" data-s="9">GROUND</a><a href="#kits" data-s="8">KITS</a><a href="#docs" data-s="10">DOCS</a>
-    <a class="btn" href="#kits">Pre-order · ₹2,000</a>
+    <a class="btn" href="#kits">Pre-order · <span class="money" data-inr="2000">₹2,000</span></a>
   </div>
 </nav>
 
@@ -336,9 +336,9 @@ footer{align-items:center}
 </div>
 <div class="cta" data-i="8">
   <div class="eyebrow" style="margin:0">Pre-order price · <b>Mission kit</b></div>
-  <div class="price">₹39,000 <s style="text-decoration:none">+ GST</s></div>
-  <div class="booknote">Pre-order today for just <b>₹2,000</b>. Pay the rest before it ships.</div>
-  <a class="btn lg js-pre" data-kit="mission" href="#kits">Reserve for ₹2,000</a>
+  <div class="price"><span class="money" data-inr="39000">₹39,000</span> <s class="taxnote" style="text-decoration:none">+ GST</s></div>
+  <div class="booknote">Pre-order today for just <b><span class="money" data-inr="2000">₹2,000</span></b>. Pay the rest before it ships.</div>
+  <a class="btn lg js-pre" data-kit="mission" href="#kits">Reserve for <span class="money" data-inr="2000">₹2,000</span></a>
   <a class="btn ghost lg" href="#kits">Compare kits</a>
 </div>
 
@@ -437,37 +437,38 @@ footer{align-items:center}
   <div class="wrap">
     <div class="eyebrow">Pre-order</div>
     <h2>Choose<br>your <span class="o">kit</span></h2>
+    <div class="sw" id="cursw"><button type="button" data-cur="INR" class="on">India · ₹ INR</button><button type="button" data-cur="USD">International · $ USD</button></div>
     <div class="book">
-      <div class="book-l"><small>Pre-order now</small><div class="book-big">Just <b>₹2,000</b> to book</div><p>Reserve any kit today for ₹2,000. We'll ask for the rest only when your kit is ready to ship.</p></div>
-      <ol class="book-r"><li><b>1</b><span>Pay <em>₹2,000</em> today to book your kit</span></li><li><b>2</b><span>We build your kit and confirm the ship date</span></li><li><b>3</b><span>Pay the balance and your kit ships</span></li></ol>
+      <div class="book-l"><small>Pre-order now</small><div class="book-big">Just <b><span class="money" data-inr="2000">₹2,000</span></b> to book</div><p>Reserve any kit today for <span class="money" data-inr="2000">₹2,000</span>. We'll ask for the rest only when your kit is ready to ship.</p></div>
+      <ol class="book-r"><li><b>1</b><span>Pay <em><span class="money" data-inr="2000">₹2,000</span></em> today to book your kit</span></li><li><b>2</b><span>We build your kit and confirm the ship date</span></li><li><b>3</b><span>Pay the balance and your kit ships</span></li></ol>
     </div>
     <div class="grid">
       <div class="kit">
         <div class="tag">For makers</div>
         <h3>Starter kit</h3>
-        <div class="today"><span>Pay today</span><b>₹2,000</b></div>
-        <div class="p"><span class="full">Full price</span>₹25,000 <small>+ GST</small></div>
+        <div class="today"><span>Pay today</span><b><span class="money" data-inr="2000">₹2,000</span></b></div>
+        <div class="p"><span class="full">Full price</span><span class="money" data-inr="25000">₹25,000</span> <small class="taxnote">+ GST</small></div>
         <ul><li>EPS, OBC and LoRa boards, assembled and tested</li><li>Frame files to 3D-print yourself</li><li>Whip antenna and GNSS patch</li><li>Example code and docs</li></ul>
-        <a class="btn ghost lg js-pre" data-kit="starter" href="#">Reserve for ₹2,000</a>
+        <a class="btn ghost lg js-pre" data-kit="starter" href="#">Reserve for <span class="money" data-inr="2000">₹2,000</span></a>
       </div>
       <div class="kit pop">
         <div class="tag"><em>Most popular</em></div>
         <h3>Mission kit</h3>
-        <div class="today"><span>Pay today</span><b>₹2,000</b></div>
-        <div class="p"><span class="full">Full price</span>₹39,000 <small>+ GST</small></div>
+        <div class="today"><span>Pay today</span><b><span class="money" data-inr="2000">₹2,000</span></b></div>
+        <div class="p"><span class="full">Full price</span><span class="money" data-inr="39000">₹39,000</span> <small class="taxnote">+ GST</small></div>
         <ul><li>Everything in Starter</li><li>1U frame with rails and panels</li><li>18650 cell and remove-before-flight key</li><li>USB pocket ground station</li><li>Telemetry dashboard and lessons</li></ul>
-        <a class="btn lg js-pre" data-kit="mission" href="#">Reserve for ₹2,000</a>
+        <a class="btn lg js-pre" data-kit="mission" href="#">Reserve for <span class="money" data-inr="2000">₹2,000</span></a>
       </div>
       <div class="kit">
         <div class="tag">For schools</div>
         <h3>Classroom pack</h3>
-        <div class="today"><span>Pay today</span><b>₹2,000</b></div>
-        <div class="p"><span class="full">Full price</span>₹1,75,000 <small>+ GST</small></div>
+        <div class="today"><span>Pay today</span><b><span class="money" data-inr="2000">₹2,000</span></b></div>
+        <div class="p"><span class="full">Full price</span><span class="money" data-inr="175000">₹1,75,000</span> <small class="taxnote">+ GST</small></div>
         <ul><li>5 Mission kits</li><li>Teacher guide and 10-week curriculum</li><li>Live online onboarding</li><li>Priority support</li></ul>
-        <a class="btn ghost lg js-pre" data-kit="classroom" href="#">Reserve for ₹2,000</a>
+        <a class="btn ghost lg js-pre" data-kit="classroom" href="#">Reserve for <span class="money" data-inr="2000">₹2,000</span></a>
       </div>
     </div>
-    <div class="fine">₹2,000 booking amount is adjusted against the full price · All prices exclude GST · Estimated shipping Q1 2027 · Razorpay: UPI, cards, netbanking · PayPal: PayPal and cards</div>
+    <div class="fine"><span class="money" data-inr="2000">₹2,000</span> booking amount is adjusted against the full price · All prices exclude GST · Estimated shipping Q1 2027 · Secure payments by Razorpay: UPI, cards and netbanking in India; international cards in USD</div>
 
     <div class="gens">
       <div class="gens-h"><div class="eyebrow" style="margin:0">Also coming</div><p>Lighter, lower-cost versions of the Hexstar CubeSat.</p></div>
@@ -501,11 +502,27 @@ footer{align-items:center}
 <script>
 /* ============ CONFIG: put your real payment / pre-order links here ============ */
 const PREORDER_LINKS = {
-  starter:   "#kits",
-  mission:   "#kits",
-  classroom: "#kits",
+  starter:   "checkout.html?kit=starter",
+  mission:   "checkout.html?kit=mission",
+  classroom: "checkout.html?kit=classroom",
 };
-document.querySelectorAll('.js-pre').forEach(a=>{ const u=PREORDER_LINKS[a.dataset.kit]; if(u && !a.closest('.cta')) a.href=u; });
+document.querySelectorAll('.js-pre').forEach(a=>{ const u=PREORDER_LINKS[a.dataset.kit]; if(u) a.href=u; });
+
+/* ============ currency: INR in India, USD elsewhere (1 USD = 115 INR) ============ */
+const USD_RATE=115;
+const CUR={v:'INR'};
+function fmtMoney(inr,cur){if(cur==='USD'){const u=Math.round(inr/USD_RATE*100)/100;return '$'+u.toLocaleString('en-US',{minimumFractionDigits:u%1?2:0,maximumFractionDigits:2});}return '₹'+Number(inr).toLocaleString('en-IN');}
+function setCurrency(cur,save){CUR.v=cur;document.querySelectorAll('.money').forEach(e=>e.textContent=fmtMoney(+e.dataset.inr,cur));
+  document.querySelectorAll('.taxnote').forEach(e=>e.textContent=cur==='USD'?'excl. taxes':'+ GST');
+  document.querySelectorAll('#cursw button').forEach(b=>b.classList.toggle('on',b.dataset.cur===cur));
+  document.querySelectorAll('.js-pre').forEach(a=>{const u=new URL(a.getAttribute('href'),location.href);if(u.pathname.endsWith('checkout.html')){u.searchParams.set('cur',cur);a.setAttribute('href','checkout.html'+u.search);}});
+  if(save)try{localStorage.setItem('hx_cur',cur)}catch(e){}}
+document.querySelectorAll('#cursw button').forEach(b=>b.addEventListener('click',()=>setCurrency(b.dataset.cur,true)));
+(async()=>{let saved=null;try{saved=localStorage.getItem('hx_cur')}catch(e){}
+  if(saved){setCurrency(saved);return;}
+  const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||'');let cur=/Calcutta|Kolkata/.test(tz)?'INR':'USD';
+  try{const r=await fetch('/api/geo',{cache:'no-store'});if(r.ok){const j=await r.json();if(j.country)cur=j.country==='IN'?'INR':'USD';}}catch(e){}
+  setCurrency(cur);})();
 
 /* ============ tiny math ============ */
 const M4={
@@ -1020,7 +1037,7 @@ const steps=[...document.querySelectorAll('.step')];
 const panels=[...document.querySelectorAll('.panel')], cta=document.querySelector('.cta');
 let tops=[];function measure(){tops=steps.map(s=>s.offsetTop);}
 addEventListener('resize',()=>{measure();resize();sizePin();});
-function sizePin(){const st=document.getElementById('gstage'),gp=document.getElementById('gpin');if(st&&gp)gp.style.height=Math.round(st.offsetHeight+innerHeight*.6)+'px';}
+function sizePin(){const st=document.getElementById('gstage'),gp=document.getElementById('gpin');if(st&&gp)gp.style.height=Math.round(st.offsetHeight+innerHeight*1.6)+'px';}
 sizePin();
 let scur=scrollY,mx=0,my=0,smx=0,smy=0;
 addEventListener('pointermove',e=>{mx=e.clientX/innerWidth*2-1;my=e.clientY/innerHeight*2-1;});
@@ -1151,19 +1168,25 @@ function homog(src,dst){const A=[],b=[];for(let i=0;i<4;i++){const [x,y]=src[i],
   return `matrix3d(${h[0]},${h[3]},0,${h[6]},${h[1]},${h[4]},0,${h[7]},0,0,1,0,${h[2]},${h[5]},0,1)`;}
 function renderGround(dt){
   if(!GS.built)buildGround();
-  const stage=document.getElementById('gstage');const gp=document.getElementById('gpin');const want=Math.round(stage.offsetHeight+innerHeight*.6)+'px';if(gp.style.height!==want)gp.style.height=want;const r=stage.getBoundingClientRect();const dash=document.getElementById('dash');
+  const stage=document.getElementById('gstage');const gp=document.getElementById('gpin');const want=Math.round(stage.offsetHeight+innerHeight*1.6)+'px';if(gp.style.height!==want)gp.style.height=want;const r=stage.getBoundingClientRect();const dash=document.getElementById('dash');
   if(r.bottom<0||r.top>innerHeight){dash.style.visibility='hidden';return;}
   const vp=[Math.round(r.left*dpr),Math.round((innerHeight-r.bottom)*dpr),Math.round(r.width*dpr),Math.round(r.height*dpr)];
   const pin=document.getElementById('gpin').getBoundingClientRect();const stTop=parseFloat(getComputedStyle(stage).top)||0;
-  const prog=clamp((stTop-pin.top)/Math.max(1,(pin.height-r.height)*.75),0,1);GS.open+=(prog-GS.open)*(1-Math.pow(.002,dt));
-  const ang=lerp(8,108,ease(clamp(GS.open,0,1)));nodes.gslid.r=[-(ang-90)*D2R,0,0];
-  nodes.gsroot.r=[0,0,Math.sin(time*.3)*.04+smx*.06];
+  const prog=clamp((stTop-pin.top)/Math.max(1,pin.height-r.height),0,1);GS.open+=(prog-GS.open)*(1-Math.pow(.002,dt));
+  const openP=smooth(0,.4,GS.open),zoomP=ease(smooth(.48,.9,GS.open));
+  const ang=lerp(8,108,ease(openP));nodes.gslid.r=[-(ang-90)*D2R,0,0];
+  nodes.gsroot.r=[0,0,(Math.sin(time*.3)*.04+smx*.06)*(1-zoomP)];
   frameId++;for(const it of GS.list)updateWorld(it.node);
   GS.led.mat.e=4+3*Math.max(0,Math.sin(time*9));
   const mobile=innerWidth<820;const asp=r.width/r.height;
-  const tgt=[-30,24,mobile?86:94],az=(-74+smx*3)*D2R,el=(15-smy*2)*D2R,d=(mobile?1240:860)*(asp<1.5?1.5/asp*.92:1);
-  const eye=[tgt[0]+d*Math.cos(el)*Math.cos(az),tgt[1]+d*Math.cos(el)*Math.sin(az),tgt[2]+d*Math.sin(el)];
-  const VP=M4.mul(M4.persp(26*D2R,asp,20,6000),M4.look(eye,tgt,[0,0,1]));
+  let tgt=[-30,24,mobile?86:94];const az=(-74+smx*3*(1-zoomP))*D2R,el=(15-smy*2)*D2R,d=(mobile?1240:860)*(asp<1.5?1.5/asp*.92:1);
+  let eye=[tgt[0]+d*Math.cos(el)*Math.cos(az),tgt[1]+d*Math.cos(el)*Math.sin(az),tgt[2]+d*Math.sin(el)];
+  if(zoomP>0){ // dolly straight into the screen until the dashboard fills the view
+    const LW=nodes.gslid.world,C=M4.xf(LW,[0,100.7,124.75]),C2=M4.xf(LW,[0,80.7,124.75]);const nrm=norm(sub(C2,C));
+    const th=Math.tan(13*D2R),dist=Math.max(142/(th*asp*.96),88.75/(th*.96));
+    const ze=[C[0]+nrm[0]*dist,C[1]+nrm[1]*dist,C[2]+nrm[2]*dist];
+    eye=[0,1,2].map(k=>lerp(eye[k],ze[k],zoomP));tgt=[0,1,2].map(k=>lerp(tgt[k],C[k],zoomP));}
+  const VP=M4.mul(M4.persp(26*D2R,asp,8,6000),M4.look(eye,tgt,[0,0,1]));
   const lc=[-40,20,60],lp=[lc[0]+Ldir[0]*700,lc[1]+Ldir[1]*700,lc[2]+Ldir[2]*700];
   const LVP=M4.mul(M4.ortho(-320,320,-320,320,100,1400),M4.look(lp,lc,[0,0,1]));
   renderScene({list:GS.list,VP,eye,LVP,vp,ground:1,space:0,edge:1,bc:[(r.left+r.width*.5)/innerWidth,1-(r.top+r.height*.42)/innerHeight]});

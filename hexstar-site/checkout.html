@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pre-order · Hexstar 1U CubeSat</title>
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#f2f2f0;--mute:#8a8a88;--dim:#4a4a49;--line:rgba(255,255,255,.12);--field:#0d0d0e;--err:#ff7a6b;--ok:#6be3a0;
+  --sans:"Inter Tight",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000;--fg:#f2f2f0}}
+:root[data-theme="dark"]{--bg:#000;--fg:#f2f2f0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav img{height:32px;display:block}
+nav a.back{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--mute);text-decoration:none;text-transform:uppercase}
+nav a.back:hover{color:var(--fg)}
+main{max-width:1180px;margin:0 auto;padding:48px 32px 90px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.26em;color:var(--mute);text-transform:uppercase}
+h1{font-size:clamp(36px,5vw,64px);font-weight:500;letter-spacing:-.035em;line-height:1;margin:14px 0 10px}
+.sub{color:#b5b5b2;font-size:15px;max-width:560px;line-height:1.55}
+.layout{display:grid;grid-template-columns:1fr 380px;gap:36px;margin-top:40px;align-items:start}
+section.card{border:1px solid var(--line);border-radius:16px;padding:26px;background:#070708;margin-bottom:18px}
+section.card h2{font-size:18px;font-weight:500;display:flex;align-items:center;gap:12px;margin-bottom:18px}
+section.card h2 b{font-family:var(--mono);font-size:11px;font-weight:500;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--mute)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:7px;font-size:13px;color:#c9c9c6}
+label.f span em{font-style:normal;color:var(--mute);font-size:12px;margin-left:4px}
+input,select{font:inherit;font-size:15px;color:var(--fg);background:var(--field);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:12px 13px;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{border-color:rgba(255,255,255,.55);box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+input.bad,select.bad{border-color:var(--err)}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#999 50%),linear-gradient(135deg,#999 50%,transparent 50%);background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+.kits{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kits label{position:relative;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;transition:border-color .15s,background .15s}
+.kits label:hover{border-color:rgba(255,255,255,.35)}
+.kits input{position:absolute;opacity:0;pointer-events:none}
+.kits label:has(input:checked){border-color:var(--fg);background:rgba(255,255,255,.05)}
+.kits label:has(input:focus-visible){box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.kits b{display:block;font-weight:500;font-size:16px}
+.kits small{display:block;color:var(--mute);font-size:13px;margin-top:6px}
+.qty{display:flex;align-items:center;gap:14px;margin-top:16px;font-size:14px;color:#c9c9c6}
+.qty input{width:90px}
+.check{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:#d0d0cd;cursor:pointer;line-height:1.45}
+.check input{width:18px;height:18px;margin-top:1px;accent-color:#f2f2f0;flex:none}
+.reveal{display:none;margin-top:16px}.reveal.on{display:block}
+.hint{font-size:12.5px;color:var(--mute);margin-top:8px;line-height:1.5}
+aside{position:sticky;top:90px}
+.sum{border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:24px;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015))}
+.sum h3{font-size:13px;font-family:var(--mono);font-weight:400;letter-spacing:.2em;color:var(--mute);text-transform:uppercase}
+.row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:#cfcfcc}
+.row b{font-weight:500;color:var(--fg);text-align:right}
+.today{margin:18px 0 6px;padding:16px;border-radius:12px;background:var(--fg);color:#000;display:flex;justify-content:space-between;align-items:center}
+.today span{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+.today b{font-size:28px;font-weight:600;letter-spacing:-.02em}
+.curnote{font-size:12.5px;color:var(--mute);margin:8px 0 14px;line-height:1.5}
+.pay{width:100%;height:52px;border-radius:999px;border:0;background:var(--fg);color:#000;font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;cursor:pointer;margin-top:16px;transition:transform .15s,opacity .15s}
+.pay:hover{transform:translateY(-1px)}.pay:disabled{opacity:.5;cursor:wait;transform:none}
+.secure{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--mute);margin-top:14px;line-height:1.5}
+.secure svg{flex:none;margin-top:2px}
+.msg{display:none;margin-top:14px;padding:12px 14px;border-radius:10px;font-size:13.5px;line-height:1.5;border:1px solid rgba(255,122,107,.45);background:rgba(255,122,107,.08);color:#ffc2b9}
+.msg.on{display:block}
+#done{display:none;max-width:620px;margin:60px auto;text-align:center}
+#done .tick{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:0 auto 22px;background:var(--fg);color:#000}
+#done h1{font-size:44px}#done p{color:#bdbdba;line-height:1.6;margin-top:10px}
+#done .ref{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;padding:10px 14px;border:1px solid var(--line);border-radius:10px;color:#d6d6d3}
+#done a.btn{display:inline-flex;margin-top:26px;height:46px;align-items:center;padding:0 24px;border-radius:999px;border:1px solid var(--line);text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+@media (max-width:900px){.layout{grid-template-columns:1fr}aside{position:static}}
+@media (max-width:620px){nav{padding:14px 16px}main{padding:28px 16px 70px}section.card{padding:20px 16px}.grid{grid-template-columns:1fr}.kits{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav><a href="index.html"><img src="assets/logo.png" alt="Hexstar Universe"></a><a class="back" href="index.html#kits">← Back to kits</a></nav>
+
+<main id="form-view">
+  <div class="eyebrow">Pre-order · First production batch</div>
+  <h1>Reserve your kit</h1>
+  <p class="sub">Book any kit today for <b class="m" data-inr="2000">₹2,000</b>. We'll ask for the balance only when your kit is ready to ship.</p>
+
+  <form id="f" class="layout" novalidate>
+    <div>
+      <section class="card">
+        <h2><b>1</b>Choose your kit</h2>
+        <div class="kits" id="kits"></div>
+        <div class="qty"><span>Quantity</span><input type="number" id="qty" min="1" max="10" value="1" inputmode="numeric"></div>
+      </section>
+
+      <section class="card">
+        <h2><b>2</b>Contact details</h2>
+        <div class="grid">
+          <label class="f full"><span>Full name</span><input id="name" autocomplete="name" required></label>
+          <label class="f"><span>Email</span><input id="email" type="email" autocomplete="email" required></label>
+          <label class="f"><span>Phone</span><input id="phone" type="tel" autocomplete="tel" placeholder="+91 98765 43210" required></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2><b>3</b>Shipping address</h2>
+        <div class="grid" id="ship"></div>
+      </section>
+
+      <section class="card">
+        <h2><b>4</b>Billing address</h2>
+        <label class="check"><input type="checkbox" id="billSame" checked><span>Same as shipping address</span></label>
+        <div class="reveal" id="billWrap"><div class="grid" id="bill"></div></div>
+      </section>
+
+      <section class="card">
+        <h2><b>5</b>Business purchase <span style="color:var(--mute);font-size:13px;font-weight:400">(optional)</span></h2>
+        <label class="check"><input type="checkbox" id="isBiz"><span>I'm buying for a company or institution and want a GST invoice</span></label>
+        <div class="reveal" id="bizWrap">
+          <div class="grid">
+            <label class="f full"><span>Company / institution name</span><input id="company" autocomplete="organization"></label>
+            <label class="f full"><span>GSTIN <em>optional</em></span><input id="gstin" maxlength="15" placeholder="29ABCDE1234F1Z5" style="text-transform:uppercase"></label>
+          </div>
+          <p class="hint">Your GSTIN appears on the tax invoice for the full order.</p>
+        </div>
+      </section>
+    </div>
+
+    <aside>
+      <div class="sum">
+        <h3>Order summary</h3>
+        <div style="margin-top:10px">
+          <div class="row"><span>Kit</span><b id="sKit">Mission kit</b></div>
+          <div class="row"><span>Quantity</span><b id="sQty">1</b></div>
+          <div class="row"><span>Full price</span><b id="sFull">₹39,000</b></div>
+          <div class="row"><span>Balance before shipping</span><b id="sBal">₹37,000</b></div>
+        </div>
+        <div class="today"><span>Pay today</span><b id="sToday">₹2,000</b></div>
+        <p class="curnote" id="curNote">Prices exclude GST. The booking amount is adjusted against the full price.</p>
+        <label class="check"><input type="checkbox" id="terms"><span>I understand this is a pre-order. Estimated shipping is Q1 2027.</span></label>
+        <button class="pay" id="payBtn" type="submit">Pay ₹2,000 with Razorpay</button>
+        <div class="msg" id="msg" role="alert"></div>
+        <div class="secure"><svg width="14" height="16" viewBox="0 0 14 16" fill="none" aria-hidden="true"><rect x="1" y="7" width="12" height="8" rx="2" stroke="#8a8a88" stroke-width="1.4"/><path d="M4 7V5a3 3 0 0 1 6 0v2" stroke="#8a8a88" stroke-width="1.4"/></svg>
+          <span>You'll enter card, UPI or netbanking details in Razorpay's secure checkout. Hexstar never sees or stores your card number.</span></div>
+      </div>
+    </aside>
+  </form>
+</main>
+
+<div id="done">
+  <div class="tick"><svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M6 13.5l4.5 4.5L20 8" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h1>You're booked.</h1>
+  <p id="doneText">Thank you. Your pre-order is confirmed, and a receipt from Razorpay is on its way to your email.</p>
+  <div class="ref" id="doneRef"></div><br>
+  <a class="btn" href="index.html">Back to Hexstar</a>
+</div>
+
+<script>
+const KITS={starter:{name:'Starter kit',inr:25000,desc:'Boards, tested'},mission:{name:'Mission kit',inr:39000,desc:'Most popular'},classroom:{name:'Classroom pack',inr:175000,desc:'5 Mission kits'}};
+const BOOKING_INR=2000,USD_RATE=115;
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+const state={kit:KITS[params.get('kit')]?params.get('kit'):'mission',qty:1,cur:params.get('cur')==='USD'?'USD':'INR'};
+const fmt=(inr,cur=state.cur)=>{if(cur==='USD'){const u=Math.round(inr/USD_RATE*100)/100;return '$'+u.toLocaleString('en-US',{minimumFractionDigits:u%1?2:0,maximumFractionDigits:2});}return '₹'+Math.round(inr).toLocaleString('en-IN');};
+
+// kit cards
+$('kits').innerHTML=Object.entries(KITS).map(([k,v])=>`<label><input type="radio" name="kit" value="${k}" ${k===state.kit?'checked':''}><b>${v.name}</b><small class="kp" data-inr="${v.inr}"></small><small>${v.desc}</small></label>`).join('');
+document.querySelectorAll('input[name=kit]').forEach(r=>r.addEventListener('change',()=>{state.kit=r.value;render();}));
+$('qty').addEventListener('input',()=>{state.qty=Math.max(1,Math.min(10,parseInt($('qty').value,10)||1));render();});
+
+// address blocks
+const CODES='AF AX AL DZ AS AD AO AI AQ AG AR AM AW AU AT AZ BS BH BD BB BY BE BZ BJ BM BT BO BQ BA BW BR IO BN BG BF BI CV KH CM CA KY CF TD CL CN CX CC CO KM CG CD CK CR CI HR CU CW CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FK FO FJ FI FR GF PF GA GM GE DE GH GI GR GL GD GP GU GT GG GN GW GY HT VA HN HK HU IS IN ID IR IQ IE IM IL IT JM JP JE JO KZ KE KI KP KR KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MQ MR MU YT MX FM MD MC MN ME MS MA MZ MM NA NR NP NL NC NZ NI NE NG NU NF MK MP NO OM PK PW PS PA PG PY PE PH PN PL PT PR QA RE RO RU RW BL SH KN LC MF PM VC WS SM ST SA SN RS SC SL SG SX SK SI SB SO ZA GS SS ES LK SD SR SJ SE CH SY TW TJ TZ TH TL TG TK TO TT TN TR TM TC TV UG UA AE GB US UM UY UZ VU VE VN VG VI WF EH YE ZM ZW'.split(' ');
+let dn=null;try{dn=new Intl.DisplayNames(['en'],{type:'region'})}catch(e){}
+const COUNTRIES=CODES.map(c=>[c,dn?dn.of(c):c]).sort((a,b)=>a[1].localeCompare(b[1]));
+const STATES='Andaman and Nicobar Islands|Andhra Pradesh|Arunachal Pradesh|Assam|Bihar|Chandigarh|Chhattisgarh|Dadra and Nagar Haveli and Daman and Diu|Delhi|Goa|Gujarat|Haryana|Himachal Pradesh|Jammu and Kashmir|Jharkhand|Karnataka|Kerala|Ladakh|Lakshadweep|Madhya Pradesh|Maharashtra|Manipur|Meghalaya|Mizoram|Nagaland|Odisha|Puducherry|Punjab|Rajasthan|Sikkim|Tamil Nadu|Telangana|Tripura|Uttar Pradesh|Uttarakhand|West Bengal'.split('|');
+function addrBlock(el,p,auto){
+  el.innerHTML=`
+    <label class="f full"><span>Country</span><select id="${p}country" autocomplete="${auto} country">${COUNTRIES.map(([c,n])=>`<option value="${c}">${n}</option>`).join('')}</select></label>
+    <label class="f full"><span>Address line 1</span><input id="${p}line1" autocomplete="${auto} address-line1" placeholder="House / flat, street"></label>
+    <label class="f full"><span>Address line 2 <em>optional</em></span><input id="${p}line2" autocomplete="${auto} address-line2" placeholder="Area, landmark"></label>
+    <label class="f"><span>City</span><input id="${p}city" autocomplete="${auto} address-level2"></label>
+    <label class="f"><span>State / region</span><span id="${p}stateWrap" style="display:contents"></span></label>
+    <label class="f"><span id="${p}postalLbl">PIN code</span><input id="${p}postal" autocomplete="${auto} postal-code" inputmode="text"></label>`;
+  const sel=$(p+'country');
+  const setState=()=>{const india=sel.value==='IN';const w=$(p+'stateWrap');const old=$(p+'state')?.value||'';
+    w.innerHTML=india?`<select id="${p}state" autocomplete="${auto} address-level1"><option value="">Select state</option>${STATES.map(s=>`<option${s===old?' selected':''}>${s}</option>`).join('')}</select>`:`<input id="${p}state" autocomplete="${auto} address-level1" value="${old.replace(/"/g,'&quot;')}">`;
+    $(p+'postalLbl').textContent=india?'PIN code':'Postal / ZIP code';$(p+'postal').inputMode=india?'numeric':'text';};
+  sel.addEventListener('change',()=>{setState();if(p==='s_'){state.cur=sel.value==='IN'?'INR':'USD';render();}});
+  return {sel,setState};
+}
+const S=addrBlock($('ship'),'s_','shipping'),B=addrBlock($('bill'),'b_','billing');
+$('billSame').addEventListener('change',()=>$('billWrap').classList.toggle('on',!$('billSame').checked));
+$('isBiz').addEventListener('change',()=>$('bizWrap').classList.toggle('on',$('isBiz').checked));
+
+function render(){
+  const k=KITS[state.kit],q=state.qty;
+  document.querySelectorAll('.kp').forEach(e=>e.textContent=fmt(+e.dataset.inr)+(state.cur==='USD'?'':' + GST'));
+  document.querySelectorAll('.m').forEach(e=>e.textContent=fmt(+e.dataset.inr));
+  $('sKit').textContent=k.name;$('sQty').textContent=q;
+  $('sFull').textContent=fmt(k.inr*q)+(state.cur==='USD'?'':' + GST');
+  const today=state.cur==='USD'?Math.round(BOOKING_INR/USD_RATE*100)/100*q*USD_RATE:BOOKING_INR*q;
+  $('sToday').textContent=fmt(today);$('sBal').textContent=fmt(k.inr*q-today);
+  $('payBtn').textContent=`Pay ${fmt(today)} with Razorpay`;
+  $('curNote').textContent=state.cur==='USD'
+    ?'International order: you pay in US dollars (1 USD = ₹115). Prices exclude local taxes and import duties.'
+    :'Indian order: you pay in rupees. Prices exclude GST; the booking amount is adjusted against the full price.';
+}
+
+// initial country: from saved draft, location, or timezone
+(async()=>{
+  let country=state.cur==='USD'?'US':'IN';
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';if(!params.get('cur'))country=/Calcutta|Kolkata/.test(tz)?'IN':'US';
+  try{const r=await fetch('/api/geo',{cache:'no-store'});if(r.ok){const j=await r.json();if(j.country&&CODES.includes(j.country))country=j.country;}}catch(e){}
+  if(!draftLoaded){S.sel.value=country;B.sel.value=country;}
+  S.setState();B.setState();state.cur=S.sel.value==='IN'?'INR':'USD';render();
+})();
+S.setState();B.setState();render();
+
+// keep an unsent draft in this browser only
+const FIELDS=['name','email','phone','company','gstin','s_country','s_line1','s_line2','s_city','s_postal','b_country','b_line1','b_line2','b_city','b_postal'];
+let draftLoaded=false;
+try{const d=JSON.parse(localStorage.getItem('hx_checkout')||'null');if(d){FIELDS.forEach(f=>{if(d[f]!=null&&$(f))$(f).value=d[f];});S.setState();B.setState();
+  if(d.s_state)$('s_state').value=d.s_state;if(d.b_state)$('b_state').value=d.b_state;draftLoaded=true;}}catch(e){}
+document.addEventListener('input',()=>{try{const d={};FIELDS.forEach(f=>d[f]=$(f)?.value);d.s_state=$('s_state')?.value;d.b_state=$('b_state')?.value;localStorage.setItem('hx_checkout',JSON.stringify(d));}catch(e){}});
+
+function addr(p){return {line1:$(p+'line1').value,line2:$(p+'line2').value,city:$(p+'city').value,state:$(p+'state').value,postal:$(p+'postal').value,country:$(p+'country').value};}
+function showMsg(t){const m=$('msg');m.textContent=t;m.classList.toggle('on',!!t);}
+function check(){
+  document.querySelectorAll('.bad').forEach(e=>e.classList.remove('bad'));
+  const need=['name','email','phone','s_line1','s_city','s_postal'];if(!$('billSame').checked)need.push('b_line1','b_city','b_postal');if($('isBiz').checked)need.push('company');
+  let first=null;for(const id of need){if(!$(id).value.trim()){$(id).classList.add('bad');first=first||$(id);}}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim())){$('email').classList.add('bad');first=first||$('email');}
+  if($('s_country').value==='IN'&&!/^[1-9][0-9]{5}$/.test($('s_postal').value.trim())){$('s_postal').classList.add('bad');first=first||$('s_postal');}
+  const g=$('gstin').value.trim().toUpperCase();if($('isBiz').checked&&g&&!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)){$('gstin').classList.add('bad');first=first||$('gstin');}
+  if(first){first.focus();first.scrollIntoView({block:'center',behavior:'smooth'});return 'Please check the highlighted fields.';}
+  if(!$('terms').checked)return 'Please confirm you understand this is a pre-order.';
+  return '';
+}
+function loadRzp(){return new Promise((res,rej)=>{if(window.Razorpay)return res();const s=document.createElement('script');s.src='https://checkout.razorpay.com/v1/checkout.js';s.onload=res;s.onerror=()=>rej(new Error('Could not load Razorpay. Check your connection and try again.'));document.head.appendChild(s);});}
+
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();const err=check();showMsg(err);if(err)return;
+  const btn=$('payBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='Starting secure checkout…';
+  const payload={kit:state.kit,qty:state.qty,contact:{name:$('name').value,email:$('email').value,phone:$('phone').value},
+    shipping:addr('s_'),billingSame:$('billSame').checked,billing:addr('b_'),isBusiness:$('isBiz').checked,business:{company:$('company').value,gstin:$('gstin').value}};
+  try{
+    const r=await fetch('/api/create-order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    let j={};try{j=await r.json()}catch(_){}
+    if(!r.ok)throw new Error(j.error||'Could not start the payment. Please try again.');
+    await loadRzp();
+    const rz=new Razorpay({key:j.key_id,order_id:j.order_id,amount:j.amount,currency:j.currency,name:'Hexstar Universe',
+      description:`Pre-order booking · ${j.kit} × ${j.qty}`,image:new URL('assets/logo.png',location.href).href,
+      prefill:{name:payload.contact.name,email:payload.contact.email,contact:payload.contact.phone},
+      notes:{kit:j.kit},theme:{color:'#111111'},
+      handler:async resp=>{btn.textContent='Confirming payment…';
+        try{const v=await fetch('/api/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(resp)});const vj=await v.json();
+          if(!vj.ok)throw new Error();done(resp.razorpay_payment_id,j);}
+        catch(_){showMsg('Your payment went through, but we could not confirm it automatically. Please keep your payment ID '+resp.razorpay_payment_id+' and contact us.');btn.disabled=false;btn.textContent=label;}},
+      modal:{ondismiss:()=>{btn.disabled=false;btn.textContent=label;}}});
+    rz.on('payment.failed',ev=>{showMsg('Payment failed: '+(ev.error&&ev.error.description||'please try again.'));btn.disabled=false;btn.textContent=label;});
+    rz.open();
+  }catch(ex){showMsg(ex.message);btn.disabled=false;btn.textContent=label;}
+});
+function done(pid,j){try{localStorage.removeItem('hx_checkout')}catch(e){}
+  $('form-view').style.display='none';$('done').style.display='block';
+  $('doneText').textContent=`Thank you. Your ${j.kit} pre-order${j.qty>1?' (× '+j.qty+')':''} is booked, and a receipt from Razorpay is on its way to your email. We'll write to you before shipping with the balance due.`;
+  $('doneRef').textContent='Payment ID · '+pid;window.scrollTo(0,0);}
+</script>
+</body>
+</html>

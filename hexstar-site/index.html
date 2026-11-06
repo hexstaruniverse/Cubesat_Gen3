@@ -230,7 +230,7 @@ footer{align-items:center}
 .ring-stage.drag{cursor:grabbing}
 .ring-stage::before,.ring-stage::after{content:"";position:absolute;top:0;bottom:0;width:9%;z-index:3;pointer-events:none}
 .ring-stage::before{left:0;background:linear-gradient(90deg,#000,transparent)}.ring-stage::after{right:0;background:linear-gradient(-90deg,#000,transparent)}
-.ring{position:absolute;inset:0;transform-style:preserve-3d}
+.ring{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
 .reel{position:absolute;left:50%;top:47%;width:var(--cw);height:calc(var(--cw)*16/9);margin:calc(var(--cw)*-8/9) 0 0 calc(var(--cw)/-2);border-radius:18px;overflow:hidden;
   background:#111;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08) inset;backface-visibility:hidden;text-decoration:none;color:#fff;will-change:transform,opacity;
   -webkit-box-reflect:below 14px linear-gradient(transparent 72%,rgba(255,255,255,.16))}
@@ -244,6 +244,19 @@ footer{align-items:center}
 .reel:hover{box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 0 1.5px rgba(255,255,255,.55) inset}
 .ring-hint{position:absolute;left:0;right:0;bottom:22px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--mute);z-index:4;pointer-events:none}
 @media (max-width:820px){.reels-head{grid-template-columns:1fr;gap:16px}.ring-stage{height:72vh;perspective:420px}}
+.rbox{position:fixed;inset:0;z-index:60;display:none}
+.rbox.on{display:block}
+.rbox .bd{position:absolute;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);opacity:0;transition:opacity .35s}
+.rbox.show .bd{opacity:1}
+.rbox .pn{position:absolute;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 40px 120px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.14);transition:all .5s cubic-bezier(.2,.8,.2,1)}
+.rbox .pn img.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .4s}
+.rbox .pn iframe,.rbox .pn video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;opacity:0;transition:opacity .4s}
+.rbox .pn video{background:#000;object-fit:contain}
+.rbox.ready .pn iframe,.rbox.ready .pn video{opacity:1}.rbox.ready .pn img.ph{opacity:0}
+.rbox .bar{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:10px;opacity:0;transition:opacity .3s .2s}
+.rbox.show .bar{opacity:1}
+.rbox .x{position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:20px;cursor:pointer;opacity:0;transition:opacity .3s}
+.rbox.show .x{opacity:1}
 /* loader */
 #load{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .8s}
 #load b{font-size:56px;font-weight:400;letter-spacing:-.04em}
@@ -534,6 +547,7 @@ footer{align-items:center}
 </div>
 
 
+<div class="rbox" id="rbox" role="dialog" aria-modal="true" aria-label="Instagram reel"><div class="bd"></div><div class="pn" id="rpn"></div><div class="bar" id="rbar"><a class="btn lg" id="rig" target="_blank" rel="noopener">Open on Instagram</a></div><button class="x" id="rx" aria-label="Close">✕</button></div>
 <div id="load"><b id="pct">0%</b><small>PREPARING FOR LAUNCH</small></div>
 
 <script>
@@ -1372,7 +1386,23 @@ const INSTAGRAM={
   stage.addEventListener('pointerdown',e=>{drag={x:e.clientX,r:rot,t:performance.now()};moved=0;stage.classList.add('drag');});
   addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x;moved=Math.max(moved,Math.abs(dx));const nr=drag.r-dx*0.0032;vel=(nr-rot)/Math.max(.016,(performance.now()-drag.t)/1000);drag.t=performance.now();rot=nr;});
   addEventListener('pointerup',()=>{if(drag){drag=null;stage.classList.remove('drag');}});
-  cards.forEach(c=>c.el.addEventListener('click',e=>{if(moved>6)e.preventDefault();}));
+  cards.forEach((c,i)=>c.el.addEventListener('click',e=>{e.preventDefault();if(moved>6)return;openReel(c,list[i]);}));
+  // ---- zoom a reel out of the ring
+  const box=document.getElementById('rbox'),pn=document.getElementById('rpn'),bar=document.getElementById('rbar');let open=null;
+  const embedOf=u=>{const m=String(u||'').match(/instagram\.com\/(?:[^\/]+\/)?(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);return m?`https://www.instagram.com/${m[1]==='reels'?'reel':m[1]}/${m[2]}/embed/`:null;};
+  function target(){const H=innerHeight,W=innerWidth;const emb=open&&open.emb;const h=Math.min(H*.84,emb?820:760);let w=emb?Math.min(420,h*.56):h*9/16;w=Math.min(w,W*.92);return {w,h:emb?h:w*16/9,x:(W-w)/2,y:(H-(emb?h:w*16/9))/2-24};}
+  function place(r,anim){pn.style.transition=anim?'':'none';pn.style.left=r.x+'px';pn.style.top=r.y+'px';pn.style.width=r.w+'px';pn.style.height=r.h+'px';}
+  function openReel(c,r){const b=c.el.getBoundingClientRect();const emb=embedOf(r.url);open={c,r,emb,from:{x:b.left,y:b.top,w:b.width,h:b.height}};
+    pn.innerHTML=`<img class="ph" src="${esc(r.poster||'')}" alt="">`+(emb?`<iframe src="${emb}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen scrolling="no" title="Instagram reel"></iframe>`:`<video src="${esc(r.video)}" controls autoplay playsinline loop></video>`);
+    const el=pn.querySelector(emb?'iframe':'video');el.addEventListener(emb?'load':'loadeddata',()=>box.classList.add('ready'),{once:true});setTimeout(()=>box.classList.add('ready'),2500);
+    const ig=document.getElementById('rig');ig.href=r.url||INSTAGRAM.profile;ig.textContent=r.url?'Open on Instagram':'Visit @'+INSTAGRAM.handle;
+    box.classList.add('on');place(open.from,false);c.el.style.opacity=0;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{box.classList.add('show');const t=target();place(t,true);bar.style.top=(t.y+t.h+18)+'px';}));
+    document.documentElement.style.overflow='hidden';hover=true;setTimeout(()=>document.getElementById('rx').focus(),50);}
+  function closeReel(){if(!open)return;const o=open;open=null;box.classList.remove('show','ready');const b=o.c.el.getBoundingClientRect();place({x:b.left,y:b.top,w:b.width,h:b.height},true);
+    setTimeout(()=>{box.classList.remove('on');pn.innerHTML='';o.c.el.style.opacity='';},480);document.documentElement.style.overflow='';hover=false;}
+  box.querySelector('.bd').addEventListener('click',closeReel);document.getElementById('rx').addEventListener('click',closeReel);
+  addEventListener('keydown',e=>{if(e.key==='Escape')closeReel();});addEventListener('resize',()=>{if(open){const t=target();place(t,false);bar.style.top=(t.y+t.h+18)+'px';}});
   function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;requestAnimationFrame(frame);if(!inView)return;
     if(!drag){if(Math.abs(vel)>.02){rot+=vel*dt;vel*=Math.pow(.04,dt);}else{vel=0;rot+=dt*(hover?.03:.13);}}
     const W=stage.clientWidth,mob=W<820;const cw=mob?Math.min(200,W*.5):Math.min(300,W*.2);stage.style.setProperty('--cw',cw+'px');
@@ -1381,7 +1411,7 @@ const INSTAGRAM={
       const x=R*Math.sin(a),z=-C-R*Math.cos(a);const lim=mob?120:200;
       const op=1-smooth(lim-160,lim,z);
       c.el.style.transform=`translate3d(${x.toFixed(1)}px,0,${z.toFixed(1)}px) rotateY(${(-a*180/Math.PI).toFixed(2)}deg)`;
-      c.el.style.opacity=op.toFixed(3);c.el.style.visibility=op<.02?'hidden':'visible';c.el.style.pointerEvents=op<.5?'none':'auto';
+      if(!(open&&open.c===c))c.el.style.opacity=op.toFixed(3);c.el.style.visibility=op<.02?'hidden':'visible';c.el.style.pointerEvents=op<.5?'none':'auto';
       const want=op>.3;if(want&&!c.playing){c.playing=true;c.v.preload='auto';const pr=c.v.play();if(pr)pr.catch(()=>{});}else if(!want&&c.playing){c.playing=false;c.v.pause();}});}
   requestAnimationFrame(frame);
 })();

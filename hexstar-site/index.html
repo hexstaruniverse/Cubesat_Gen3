@@ -1363,13 +1363,15 @@ const INSTAGRAM={
   handle:'hexstar_universe',
   profile:'https://www.instagram.com/hexstar_universe/',
   reels:[
-    {url:'https://www.instagram.com/hexstar_universe/reel/De9zHbth74o/',video:'assets/reels/reel1.mp4',poster:'assets/reels/reel1.jpg',caption:'',views:''},
-    {url:'https://www.instagram.com/hexstar_universe/reel/DeKJ5ZDBqts/',video:'assets/reels/reel2.mp4',poster:'assets/reels/reel2.jpg',caption:'',views:''},
-    {url:'https://www.instagram.com/hexstar_universe/reel/DdjD9DXBAPE/',video:'assets/reels/reel3.mp4',poster:'assets/reels/reel3.jpg',caption:'',views:''},
-    {url:'https://www.instagram.com/hexstar_universe/reel/Dco1UcETg9Z/',video:'assets/reels/reel4.mp4',poster:'assets/reels/reel4.jpg',caption:'',views:''},
-    {url:'https://www.instagram.com/hexstar_universe/reel/DVBR223D6XA/',video:'assets/reels/reel5.mp4',poster:'assets/reels/reel5.jpg',caption:'',views:''},
-    {url:'https://www.instagram.com/hexstar_universe/reel/DTyGi_ik5C9/',video:'assets/reels/reel6.mp4',poster:'assets/reels/reel6.jpg',caption:'',views:''},
-    {url:'https://www.instagram.com/hexstar_universe/reel/DU6WfPDE-H1/',video:'assets/reels/reel7.mp4',poster:'assets/reels/reel7.jpg',caption:'',views:''},
+    {url:'https://www.instagram.com/hexstar_universe/reel/De9zHbth74o/',video:'assets/reels/reel1.mp4',full:'assets/reels/reel1_full.mp4',poster:'assets/reels/reel1.jpg',caption:'',views:''},
+    {url:'https://www.instagram.com/hexstar_universe/reel/DeKJ5ZDBqts/',video:'assets/reels/reel2.mp4',full:'assets/reels/reel2_full.mp4',poster:'assets/reels/reel2.jpg',caption:'',views:''},
+    {url:'https://www.instagram.com/hexstar_universe/reel/DdjD9DXBAPE/',video:'assets/reels/reel3.mp4',full:'assets/reels/reel3_full.mp4',poster:'assets/reels/reel3.jpg',caption:'',views:''},
+    {url:'https://www.instagram.com/hexstar_universe/reel/Dco1UcETg9Z/',video:'assets/reels/reel4.mp4',full:'assets/reels/reel4_full.mp4',poster:'assets/reels/reel4.jpg',caption:'',views:''},
+    {url:'https://www.instagram.com/hexstar_universe/reel/DVBR223D6XA/',video:'assets/reels/reel5.mp4',full:'assets/reels/reel5_full.mp4',poster:'assets/reels/reel5.jpg',caption:'',views:''},
+    {url:'https://www.instagram.com/hexstar_universe/reel/DTyGi_ik5C9/',video:'assets/reels/reel6.mp4',full:'assets/reels/reel6_full.mp4',poster:'assets/reels/reel6.jpg',caption:'',views:''},
+    {url:'https://www.instagram.com/hexstar_universe/reel/DU6WfPDE-H1/',video:'assets/reels/reel7.mp4',full:'assets/reels/reel7_full.mp4',poster:'assets/reels/reel7.jpg',caption:'',views:''},
+    {url:'',video:'assets/reels/reel8.mp4',full:'assets/reels/reel8_full.mp4',poster:'assets/reels/reel8.jpg',caption:'',views:''},
+    {url:'',video:'assets/reels/reel9.mp4',full:'assets/reels/reel9_full.mp4',poster:'assets/reels/reel9.jpg',caption:'',views:''},
   ]};
 (function(){
   const stage=document.getElementById('ringStage'),ring=document.getElementById('ring');if(!stage)return;
@@ -1378,8 +1380,7 @@ const INSTAGRAM={
   const ig='<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4.2" stroke="#fff" stroke-width="2"/><circle cx="17.4" cy="6.6" r="1.3" fill="#fff"/></svg>';
   const list=[];while(list.length<12)list.push(...INSTAGRAM.reels);list.length=Math.max(12,INSTAGRAM.reels.length);
   const cards=list.map(r=>{const a=document.createElement('a');a.className='reel';a.href=r.url||INSTAGRAM.profile;a.target='_blank';a.rel='noopener';a.draggable=false;
-    const sc=(String(r.url||'').match(/\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/)||[])[1];
-    a.innerHTML=`<video muted loop playsinline preload="none" poster="${esc(r.poster||'')}" src="${esc(r.video||'')}"></video>${sc?`<img class="igc" alt="" loading="lazy" referrerpolicy="no-referrer" src="https://www.instagram.com/p/${sc}/media/?size=l" onload="this.parentNode.classList.add('hasig')" onerror="this.remove()">`:''}<div class="rt">${ig}Reel</div><div class="rc"><b>${esc(r.caption||'')}</b><small><i></i>${r.views?esc(r.views)+' views · ':''}@${esc(INSTAGRAM.handle)}</small></div>`;
+    a.innerHTML=`<video muted loop playsinline preload="none" poster="${esc(r.poster||'')}" src="${esc(r.video||'')}"></video><div class="rt">${ig}Reel</div><div class="rc"><b>${esc(r.caption||'')}</b><small><i></i>${r.views?esc(r.views)+' views · ':''}@${esc(INSTAGRAM.handle)}</small></div>`;
     ring.appendChild(a);return {el:a,v:a.querySelector('video'),playing:false};});
   const N=cards.length;let rot=0,vel=0,hover=false,drag=null,moved=0,inView=false,last=performance.now();
   new IntersectionObserver(e=>{inView=e[0].isIntersecting;if(!inView)cards.forEach(c=>{if(c.playing){c.v.pause();c.playing=false;}});},{threshold:.05}).observe(stage);
@@ -1393,10 +1394,10 @@ const INSTAGRAM={
   const embedOf=u=>{const m=String(u||'').match(/instagram\.com\/(?:[^\/]+\/)?(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);return m?`https://www.instagram.com/${m[1]==='reels'?'reel':m[1]}/${m[2]}/embed/`:null;};
   function target(){const H=innerHeight,W=innerWidth;const emb=open&&open.emb;const h=Math.min(H*.84,emb?820:760);let w=emb?Math.min(420,h*.56):h*9/16;w=Math.min(w,W*.92);return {w,h:emb?h:w*16/9,x:(W-w)/2,y:(H-(emb?h:w*16/9))/2-24};}
   function place(r,anim){pn.style.transition=anim?'':'none';pn.style.left=r.x+'px';pn.style.top=r.y+'px';pn.style.width=r.w+'px';pn.style.height=r.h+'px';}
-  function openReel(c,r){const b=c.el.getBoundingClientRect();const emb=embedOf(r.url);open={c,r,emb,from:{x:b.left,y:b.top,w:b.width,h:b.height}};
-    pn.innerHTML=`<img class="ph" src="${esc(r.poster||'')}" alt="">`+(emb?`<iframe src="${emb}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen scrolling="no" title="Instagram reel"></iframe>`:`<video src="${esc(r.video)}" controls autoplay playsinline loop></video>`);
+  function openReel(c,r){const b=c.el.getBoundingClientRect();const emb=r.full?null:embedOf(r.url);open={c,r,emb,from:{x:b.left,y:b.top,w:b.width,h:b.height}};
+    pn.innerHTML=`<img class="ph" src="${esc(r.poster||'')}" alt="">`+(emb?`<iframe src="${emb}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen scrolling="no" title="Instagram reel"></iframe>`:`<video src="${esc(r.full||r.video)}" controls autoplay playsinline></video>`);
     const el=pn.querySelector(emb?'iframe':'video');el.addEventListener(emb?'load':'loadeddata',()=>box.classList.add('ready'),{once:true});setTimeout(()=>box.classList.add('ready'),2500);
-    const ig=document.getElementById('rig');ig.href=r.url||INSTAGRAM.profile;ig.textContent=r.url?'Open on Instagram':'Visit @'+INSTAGRAM.handle;
+    const ig=document.getElementById('rig');ig.href=r.url||INSTAGRAM.profile;ig.textContent=r.url?'Watch on Instagram':'Follow @'+INSTAGRAM.handle;
     box.classList.add('on');place(open.from,false);c.el.style.opacity=0;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{box.classList.add('show');const t=target();place(t,true);bar.style.top=(t.y+t.h+18)+'px';}));
     document.documentElement.style.overflow='hidden';hover=true;setTimeout(()=>document.getElementById('rx').focus(),50);}

@@ -38,6 +38,13 @@ Prices, the ₹2,000 booking amount and the rate (1 USD = 115 INR) are set in `a
 
 Then redeploy. Use test keys first to try a payment, then switch to live keys. For USD payments, international payments must be enabled on your Razorpay account.
 
+## Instagram reel ring
+The "Follow the mission" section shows your reels on a 3D ring that rotates in a loop. Edit `INSTAGRAM` in `index.html`:
+- `handle` / `profile`: your Instagram username and profile link.
+- `reels`: one entry per reel. Each has `video` (a vertical, muted mp4 in `assets/reels/`, ideally 4 to 10 seconds and under 1 MB), `poster` (a still image), `url` (the reel's Instagram link), `caption` and an optional `views`.
+
+The demo clips in `assets/reels/` are cut from the product video. Replace them with your own reels.
+
 ## Things to edit
 - Prices, kit contents, Gen 1 / Gen 2 cards: the `#kits` section in `index.html`.
 - Hotspot text: `HS` in `tools/comps.py` (then re-run it), or edit `assets/boards.json` directly.

@@ -44,7 +44,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:cent
 /* story */
 #story{position:relative;z-index:2}
 .step{height:100vh}
-.step.tall{height:160vh}
+.step.tall{height:95vh}
 .panel{text-shadow:0 2px 24px rgba(0,0,0,.6);position:fixed;z-index:5;left:32px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;max-width:min(560px,44vw);
   pointer-events:none;opacity:0;will-change:opacity,transform}
 .panel.live{pointer-events:auto}
@@ -1020,13 +1020,13 @@ const steps=[...document.querySelectorAll('.step')];
 const panels=[...document.querySelectorAll('.panel')], cta=document.querySelector('.cta');
 let tops=[];function measure(){tops=steps.map(s=>s.offsetTop);}
 addEventListener('resize',()=>{measure();resize();sizePin();});
-function sizePin(){const st=document.getElementById('gstage'),gp=document.getElementById('gpin');if(st&&gp)gp.style.height=Math.round(st.offsetHeight+innerHeight*1.1)+'px';}
+function sizePin(){const st=document.getElementById('gstage'),gp=document.getElementById('gpin');if(st&&gp)gp.style.height=Math.round(st.offsetHeight+innerHeight*.6)+'px';}
 sizePin();
 let scur=scrollY,mx=0,my=0,smx=0,smy=0;
 addEventListener('pointermove',e=>{mx=e.clientX/innerWidth*2-1;my=e.clientY/innerHeight*2-1;});
 function progress(y){ // returns continuous section index (state i fully reached at sp=i)
   const vh=innerHeight;
-  for(let i=0;i<tops.length-1;i++){const a=tops[i],b=tops[i+1];if(y<b){const f=clamp((y-a)/(b-a),0,1);return i+smooth(.3,.9,f);}}
+  for(let i=0;i<tops.length-1;i++){const a=tops[i],b=tops[i+1];if(y<b){const f=clamp((y-a)/(b-a),0,1);return i+smooth(.18,.82,f);}}
   return tops.length-1;}
 
 function blendStates(sp){
@@ -1050,7 +1050,7 @@ const navLinks=[...document.querySelectorAll('.links a[data-s]')];
 
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;frameId++;
-  scur+=(scrollY-scur)*(1-Math.pow(.0009,dt));if(Math.abs(scrollY-scur)<.3)scur=scrollY;
+  scur+=(scrollY-scur)*(1-Math.pow(.00025,dt));if(Math.abs(scrollY-scur)<.3)scur=scrollY;
   smx+=(mx-smx)*(1-Math.pow(.02,dt));smy+=(my-smy)*(1-Math.pow(.02,dt));
   const sp=progress(scur);
   const st=blendStates(sp);
@@ -1151,7 +1151,7 @@ function homog(src,dst){const A=[],b=[];for(let i=0;i<4;i++){const [x,y]=src[i],
   return `matrix3d(${h[0]},${h[3]},0,${h[6]},${h[1]},${h[4]},0,${h[7]},0,0,1,0,${h[2]},${h[5]},0,1)`;}
 function renderGround(dt){
   if(!GS.built)buildGround();
-  const stage=document.getElementById('gstage');const gp=document.getElementById('gpin');const want=Math.round(stage.offsetHeight+innerHeight*1.1)+'px';if(gp.style.height!==want)gp.style.height=want;const r=stage.getBoundingClientRect();const dash=document.getElementById('dash');
+  const stage=document.getElementById('gstage');const gp=document.getElementById('gpin');const want=Math.round(stage.offsetHeight+innerHeight*.6)+'px';if(gp.style.height!==want)gp.style.height=want;const r=stage.getBoundingClientRect();const dash=document.getElementById('dash');
   if(r.bottom<0||r.top>innerHeight){dash.style.visibility='hidden';return;}
   const vp=[Math.round(r.left*dpr),Math.round((innerHeight-r.bottom)*dpr),Math.round(r.width*dpr),Math.round(r.height*dpr)];
   const pin=document.getElementById('gpin').getBoundingClientRect();const stTop=parseFloat(getComputedStyle(stage).top)||0;

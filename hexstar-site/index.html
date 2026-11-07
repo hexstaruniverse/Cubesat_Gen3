@@ -921,7 +921,7 @@ const STATES=[
  // 7 near space (hanging from the balloon line)
  {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,104],az:-36,el:9,d:640},shift:[.24,.02],md:1.8,msy:-.3,sway:1,ground:0,space:1,alt:31},
  // 8 pull back: balloon in view, countdown + burst happen on the way to 9
- {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,520],az:-36,el:6,d:2900},shift:[.2,0],md:1.6,msy:-.1,sway:.6,ground:0,space:1,alt:31},
+ {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,700],az:-36,el:6,d:3500},shift:[.2,0],md:1.6,msy:-.1,sway:.6,ground:0,space:1,alt:31},
  // 9 parachute open, still high
  {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,420],az:-30,el:6,d:2300},shift:[.2,0],md:1.6,msy:-.1,sway:1,ground:0,space:1,alt:26},
  // 10 low over the clouds, blue sky
@@ -1142,8 +1142,8 @@ function blendStates(sp){
   const A=STATES[i],B=STATES[j];const out={nodes:{}};
   for(const n of NODE_NAMES){const a=A.nodes[n]||{},b=B.nodes[n]||{};const pa=a.p||[0,0,0],pb=b.p||[0,0,0],ra=a.r||[0,0,0],rb=b.r||[0,0,0];
     const dflt=n==='tether'?0:1;out.nodes[n]={p:[0,1,2].map(k=>lerp(pa[k],pb[k],t)),r:[0,1,2].map(k=>lerp(ra[k],rb[k],t)),o:lerp(a.o??dflt,b.o??dflt,t)};}
-  const ca=A.cam,cb=B.cam;
-  out.cam={t:[0,1,2].map(k=>lerp(ca.t[k],cb.t[k],t)),az:lerp(ca.az,cb.az,t),el:lerp(ca.el,cb.el,t),d:lerp(ca.d,cb.d,t)};
+  const ca=A.cam,cb=B.cam;const tc=i===8?ease(smooth(.55,1,clamp(sp-8,0,1))):t; // hold the wide shot through the countdown
+  out.cam={t:[0,1,2].map(k=>lerp(ca.t[k],cb.t[k],tc)),az:lerp(ca.az,cb.az,tc),el:lerp(ca.el,cb.el,tc),d:lerp(ca.d,cb.d,tc)};
   out.shift=[lerp(A.shift[0],B.shift[0],t),lerp(A.shift[1],B.shift[1],t)];
   out.sway=lerp(A.sway,B.sway,t);out.space=lerp(A.space||0,B.space||0,t);out.alt=lerp(A.alt??31,B.alt??31,t);out.desk=lerp(A.desk||0,B.desk||0,t);out.md=lerp(A.md,B.md,t);out.msy=lerp(A.msy,B.msy,t);out.ground=lerp(A.ground,B.ground,t);
   return out;}
@@ -1162,24 +1162,48 @@ function flight(sp,st){
   const k=sp<8+burstAt||sp>=9?-1:(u8-burstAt)/(1-burstAt);
   nodes.shreds.o=k>0&&k<1?1-smooth(.6,1,k):0;
   if(k>0&&k<1&&Math.abs(k-FL.lastK)>.002){FL.lastK=k;reup(FL.shredMesh,shredGeo(k));}
-  // parachute: deploys after the burst, collapses beside the CubeSat after landing
-  const dep=sp<8?0:sp<9?smooth(.62,.88,u8):1;const pop=dep*(1+.12*Math.sin(Math.min(1,dep)*Math.PI));
-  const col=smooth(.78,.94,u10)+(sp>=11?1:0);const cc=Math.min(1,col);
-  nodes.chute.o=dep>.02?1:0;
-  const ps=Math.max(.02,pop);nodes.chute.s=[lerp(ps,.8,cc),lerp(ps,.8,cc),lerp(ps,.07,cc)];
-  nodes.chute.r=[0,0,.4*cc];nodes.chute.p=[-80*cc,250*cc,-322*cc];
+  // parachute: hangs closed under the balloon, streams out after the burst, fills and opens, then sinks and deflates after landing
+  let m=0;if(sp>=8+burstAt&&sp<9){m=.35*smooth(burstAt+.01,.66,u8)+.65*smooth(.66,.92,u8);}else if(sp>=9)m=1;
+  const flut=m>0&&m<1?4*m*(1-m):(m>=1&&sp<10.8?.08:0);
+  const c=sp>=10?smooth(.80,.99,u10)+(sp>=11?1:0):0;const cc=Math.min(1,c);
+  nodes.chute.o=sp<6.6?0:1;nodes.riser.o=sp<6.6?0:1-smooth(.85,1,cc);
+  nodes.chute.s=[1+.12*cc,1+.12*cc,lerp(1,.06,ease(cc))];
+  nodes.chute.p=[-40*ease(cc),250*ease(cc),-(FL.cf[2]-6)*ease(cc)];
+  const key=[m.toFixed(3),cc.toFixed(3),flut>0?(time*30|0):0].join();
+  if(key!==FL.ckey){FL.ckey=key;reup(FL.cA,canopyGeo(m,cc,0,flut));reup(FL.cB,canopyGeo(m,cc,1,flut));reup(FL.cL,canopyGeo(m,cc,2,flut));
+    const cfL=[FL.cf[0]+nodes.chute.p[0],FL.cf[1]+nodes.chute.p[1],FL.cf[2]+nodes.chute.p[2]];reup(FL.rs,riserGeo(cfL));}
   // free-fall jolt between burst and the canopy opening, and gentle swing under the canopy
   const drop=sp>=8&&sp<9?-170*smooth(burstAt,.66,u8)*(1-smooth(.72,.9,u8)):0;
   // landing: punch through a cloud layer, then come down onto the desk
   const onDesk=sp>=10+.42;
   nodes.root.p=[0,0,drop+(onDesk?lerp(1150,0,ease(smooth(.44,.80,u10))):0)];
   if(sp>=8+.6&&sp<10.8)nodes.root.r=[.05*Math.sin(time*1.1),.04*Math.cos(time*.9),nodes.root.r[2]];
-  if(onDesk){nodes.tether.o=1-smooth(.74,.88,u10)-(sp>=11?1:0);if(nodes.tether.o<0)nodes.tether.o=0;}
+  if(onDesk){nodes.tether.o=1-smooth(.82,.96,u10)-(sp>=11?1:0);if(nodes.tether.o<0)nodes.tether.o=0;}
   st.space=sp>=10?(onDesk?0:1):st.space;st.desk=onDesk?1:0;st.ground=onDesk?1:st.ground;
   FL.fog=sp>=10&&sp<11?smooth(.16,.40,u10)*(1-smooth(.44,.62,u10)):0;
   FL.u8=sp>=8&&sp<9?u8:-1;
 }
-function shredGeo(k){const g=new Geo();const C=[-6,-6,760];
+const CG=16,CST=10;
+function canopyGeo(m,drape,mode,flut){ // m: 0 closed bag, .35 streamer, 1 open; drape: 0..1 deflating on the desk
+  const g=new Geo();const cf=FL.cf||[-6,-6,426.7];const X=cf[0],Y=cf[1];
+  const shape=(q,ph)=>{const bag=[14+30*q,830-230*q],str=[10+24*q,920-360*q],
+      opn=[230*Math.sin(q*Math.PI/2)*(1+.05*Math.sin((ph*CG/(2*Math.PI))%1*Math.PI)),cf[2]+360-120*(1-Math.cos(q*Math.PI/2))];
+    let r,z;if(m<.35){const t=m/.35;r=lerp(bag[0],str[0],t);z=lerp(bag[1],str[1],t);}else{const t=ease((m-.35)/.65);r=lerp(str[0],opn[0],t);z=lerp(str[1],opn[1],t);}
+    r*=1+flut*.14*Math.sin(ph*5+q*7+time*19)+.06*Math.sin(ph*CG)*(1-Math.min(1,m*2));         // flutter while filling, folds when closed
+    r*=1+drape*(.10+.06*Math.sin(ph*CG*.5+q*5));z=lerp(z,cf[2]+60*(1-q)*.5,drape*.0);
+    return [X+Math.cos(ph)*r,Y+Math.sin(ph)*r,z];};
+  if(mode===2){for(let k=0;k<CG;k++){const ph=k/CG*Math.PI*2;lineSeg(g,shape(1,ph),cf,.45);}return g;}
+  for(let k=0;k<CG;k++){if((k%2)!==mode)continue;const o=g.v.length/8;
+    for(let a=0;a<=CST;a++){const q=a/CST;for(let b=0;b<=4;b++){const ph=(k+b/4)/CG*Math.PI*2;g.vert(shape(q,ph),[0,0,1]);}}
+    for(let a=0;a<CST;a++)for(let b=0;b<4;b++){const i0=o+a*5+b,i1=i0+5;g.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}}
+  // smooth normals from the triangles
+  const v=g.v,n=new Float32Array(v.length/8*3);for(let i=0;i<g.i.length;i+=3){const a=g.i[i],b=g.i[i+1],c=g.i[i+2];
+    const pa=[v[a*8],v[a*8+1],v[a*8+2]],pb=[v[b*8],v[b*8+1],v[b*8+2]],pc=[v[c*8],v[c*8+1],v[c*8+2]];const fn=cross(sub(pb,pa),sub(pc,pa));
+    for(const x of [a,b,c]){n[x*3]+=fn[0];n[x*3+1]+=fn[1];n[x*3+2]+=fn[2];}}
+  for(let x=0;x<n.length/3;x++){const q=norm([n[x*3],n[x*3+1],n[x*3+2]]);v[x*8+3]=q[0];v[x*8+4]=q[1];v[x*8+5]=q[2];}
+  return g;}
+function riserGeo(top){const g=new Geo();lineSeg(g,FL.apex||[-6,-6,316.7],top,.6);return g;}
+function shredGeo(k){const g=new Geo();const C=[-6,-6,1130];
   for(let i=0;i<FL.dirs.length;i++){const [d,sp,w]=FL.dirs[i];const r=250+760*k*sp;
     const P=[C[0]+d[0]*r,C[1]+d[1]*r,C[2]+d[2]*r*1.1-1500*k*k];
     let a=norm(cross(d,Math.abs(d[2])<.95?[0,0,1]:[1,0,0])),b=cross(d,a);const an=k*12*w;const ca=Math.cos(an),sa=Math.sin(an);
@@ -1196,24 +1220,20 @@ function deskTex(){const w=2048,h=1024;const c=document.createElement('canvas');
   return {c:tex(c,1),o:tex(mk('rgb(255,150,0)'),0),h:tex(mk('#000'),0)};}
 function buildFlight(){
   // balloon (latex, slightly teardrop) + the line up to it
-  node('balloon','root');nodes.balloon.pivot=[-6,-6,760];node('tetherTop','root');node('chute','root');nodes.chute.pivot=[-6,-6,330+DZT];node('shreds','root');
-  let g=new Geo();const C=[-6,-6,760],RB=240;const SEG=48,RING=32;const o0=g.v.length/8;
+  node('balloon','root');nodes.balloon.pivot=[-6,-6,1130];node('tetherTop','root');node('chute','root');nodes.chute.pivot=[-6,-6,330+DZT+110];node('shreds','root');
+  let g=new Geo();const C=[-6,-6,1130],RB=240;const SEG=48,RING=32;const o0=g.v.length/8;
   for(let a=0;a<=RING;a++){const th=a/RING*Math.PI;for(let b=0;b<=SEG;b++){const ph=b/SEG*Math.PI*2;
     const sx=Math.sin(th)*Math.cos(ph),sy=Math.sin(th)*Math.sin(ph),cz=Math.cos(th);const taper=cz<0?1-.32*Math.pow(-cz,3):1;
     g.vert([C[0]+sx*RB*taper,C[1]+sy*RB*taper,C[2]+cz*RB*1.12],norm([sx,sy,cz*.9]));}}
   for(let a=0;a<RING;a++)for(let b=0;b<SEG;b++){const i0=o0+a*(SEG+1)+b,i1=i0+SEG+1;g.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}
-  g.cyl(-6,-6,760-RB*1.12-10,9,6,22,'z',20);
+  g.cyl(-6,-6,1130-RB*1.12-10,9,6,22,'z',20);
   add('balloon',g,{c:[.86,.85,.82],r:.42,m:0});
-  const apex=[-6,-6,330+DZT];
-  g=new Geo();lineSeg(g,apex,[-6,-6,760-RB*1.12-18],.8);add('tetherTop',g,'white');
-  // parachute canopy: 16 gores, orange and white, plus suspension lines
-  const gA=new Geo(),gB=new Geo(),gL=new Geo();const top=[apex[0],apex[1],apex[2]+330];const RC=230,HC=120,G=16,ST=10;
-  for(let k=0;k<G;k++){const gg=k%2?gA:gB;const o=gg.v.length/8;
-    for(let a=0;a<=ST;a++){const th=a/ST*Math.PI/2;for(let b=0;b<=4;b++){const ph=(k+b/4)/G*Math.PI*2;const bul=1+.06*Math.sin(b/4*Math.PI);
-      gg.vert([top[0]+Math.sin(th)*Math.cos(ph)*RC*bul,top[1]+Math.sin(th)*Math.sin(ph)*RC*bul,top[2]+Math.cos(th)*HC],norm([Math.sin(th)*Math.cos(ph),Math.sin(th)*Math.sin(ph),Math.cos(th)*1.6]));}}
-    for(let a=0;a<ST;a++)for(let b=0;b<4;b++){const i0=o+a*5+b,i1=i0+5;gg.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}
-    const ph=k/G*Math.PI*2;lineSeg(gL,[top[0]+Math.cos(ph)*RC,top[1]+Math.sin(ph)*RC,top[2]],apex,.45);}
-  add('chute',gA,{c:[.95,.32,.06],r:.55,m:0});add('chute',gB,{c:[.9,.9,.88],r:.55,m:0});add('chute',gL,{c:[.85,.85,.82],r:.6,m:0});
+  const apex=[-6,-6,330+DZT];FL.apex=apex;FL.cf=[apex[0],apex[1],apex[2]+110];
+  g=new Geo();lineSeg(g,[-6,-6,860],[-6,-6,1130-RB*1.12-18],.8);add('tetherTop',g,'white');
+  // parachute: shape is rebuilt each frame from a morph (closed bag -> streamer -> open dome -> deflated on the desk)
+  FL.cA=upload(canopyGeo(0,0,0,0));FL.cB=upload(canopyGeo(0,0,1,0));FL.cL=upload(canopyGeo(0,0,2,0));
+  drawList.push({node:nodes.chute,mesh:FL.cA,mat:{c:[.95,.32,.06],r:.55,m:0}},{node:nodes.chute,mesh:FL.cB,mat:{c:[.9,.9,.88],r:.55,m:0}},{node:nodes.chute,mesh:FL.cL,mat:{c:[.85,.85,.82],r:.6,m:0}});
+  node('riser','root');FL.rs=upload(riserGeo(FL.cf));drawList.push({node:nodes.riser,mesh:FL.rs,mat:{c:[.85,.85,.82],r:.6,m:0}});
   // balloon shreds (rebuilt per frame while they fly)
   FL.dirs=[];let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
   for(let i=0;i<44;i++){const z=rnd()*2-1,ph=rnd()*Math.PI*2,r=Math.sqrt(1-z*z);FL.dirs.push([[r*Math.cos(ph),r*Math.sin(ph),z],.6+rnd()*.8,rnd()]);}
@@ -1250,7 +1270,7 @@ function loop(now){
   const mobile=innerWidth<820;
   const c=window.DBG?{...st.cam,...window.DBG}:st.cam;const az=(c.az+smx*4)*D2R,el=clamp(c.el-smy*2.5,-8,85)*D2R;let d=c.d*(mobile?st.md*(innerHeight/innerWidth>2.1?1.08:1):1)*(innerWidth/innerHeight<1.25&&!mobile?1.15:1);
   const eye=[c.t[0]+d*Math.cos(el)*Math.cos(az),c.t[1]+d*Math.cos(el)*Math.sin(az),c.t[2]+d*Math.sin(el)];
-  const view=M4.look(eye,c.t,[0,0,1]);const proj=M4.persp(26*D2R,W/H,10,4000);
+  const view=M4.look(eye,c.t,[0,0,1]);const proj=M4.persp(26*D2R,W/H,20,14000);
   const sx=mobile?0:st.shift[0], sy=mobile?st.msy:st.shift[1];
   proj[8]=-sx;proj[9]=-sy;
   const VP=M4.mul(proj,view);
@@ -1426,7 +1446,7 @@ function ui(sp,VP){
       if(u>=.5&&u<.64){txt='';sub='BALLOON BURST';o=smooth(.5,.54,u)*(1-smooth(.6,.64,u));}
       if(u>=.7&&u<.95){sub='PARACHUTE DEPLOYED';o=smooth(.7,.75,u)*(1-smooth(.9,.95,u));}}
     cEl.querySelector('b').textContent=txt;cEl.querySelector('small').textContent=sub;cEl.style.opacity=o.toFixed(3);cEl.querySelector('b').style.transform=`scale(${sc.toFixed(3)})`;
-    document.getElementById('flash').style.opacity=u>=0?(Math.exp(-Math.pow((u-.56)/.010,2))*.5).toFixed(3):0;
+    document.getElementById('flash').style.opacity=0;
     document.getElementById('fog').style.opacity=(FL.fog||0).toFixed(3);}document.getElementById('hud').style.opacity=smooth(innerHeight*.5,innerHeight*.9,kt);
   let aft=-1;if(k<innerHeight*.5){aft=9;for(const [id,n] of [['kits',8],['docs',10]])if(document.getElementById(id).getBoundingClientRect().top<innerHeight*.5)aft=n;}
   navLinks.forEach(a=>{const n=+a.dataset.s;a.classList.toggle('on',aft>=0?n===aft:Math.abs(n-(idx>=3&&idx<=6?3:idx))<.5);});

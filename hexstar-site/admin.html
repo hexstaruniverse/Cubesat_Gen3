@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin · Hexstar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#f2f2f0;--mute:#8a8a88;--line:rgba(255,255,255,.1);--card:#0a0a0b;--ok:#6be3a0;--warn:#ffcc66;--err:#ff7a6b;
+  --sans:"Inter Tight",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000;--fg:#f2f2f0}}
+:root[data-theme="dark"]{--bg:#000;--fg:#f2f2f0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.mono{font-family:var(--mono)}
+#login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.lcard{width:min(380px,100%);border:1px solid var(--line);border-radius:18px;padding:30px;background:var(--card)}
+.lcard img{height:32px;margin-bottom:22px}
+.lcard h1{font-size:24px;font-weight:500;margin-bottom:18px}
+input[type=password],input[type=search],select{width:100%;background:#0f0f10;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:12px 13px;outline:none}
+input:focus,select:focus{border-color:rgba(255,255,255,.5)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--fg);background:var(--fg);color:#000;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}.btn.ghost:hover{border-color:rgba(255,255,255,.45)}
+.lcard .btn{width:100%;margin-top:14px;height:46px}
+.msg{margin-top:12px;font-size:13px;color:var(--err);min-height:18px}
+#app{display:none}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 28px;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header img{height:28px;display:block}
+header .r{display:flex;gap:8px;align-items:center}
+header small{color:var(--mute);font-size:12px;margin-right:6px}
+main{max-width:1280px;margin:0 auto;padding:28px 28px 80px}
+h2{font-size:18px;font-weight:500;margin:34px 0 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.note{border:1px solid rgba(255,204,102,.35);background:rgba(255,204,102,.07);color:#ffe3a6;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.5;margin-bottom:10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.kpi{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--card)}
+.kpi small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mute)}
+.kpi b{display:block;font-size:30px;font-weight:500;letter-spacing:-.02em;margin-top:8px}
+.kpi i{font-style:normal;font-size:12.5px;color:var(--mute)}
+.grid2{display:grid;grid-template-columns:1.6fr 1fr;gap:12px}
+.card{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--card);min-width:0}
+.card h3{font-size:14px;font-weight:500;margin-bottom:12px;color:#d6d6d3}
+svg.chart{width:100%;height:220px;display:block}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mute);margin-top:6px}.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.crow{display:grid;grid-template-columns:26px 1fr 60px;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.crow .bar{height:6px;border-radius:3px;background:#f2f2f0;opacity:.85;margin-top:5px}
+.crow .n{text-align:right;font-family:var(--mono);font-size:12px;color:#d6d6d3}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tools input[type=search]{width:240px;padding:9px 12px}
+.tools select{width:auto;padding:9px 34px 9px 12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{background:none;border:0;padding:8px 14px;font-size:12px;cursor:pointer;color:var(--mute)}
+.seg button.on{background:var(--fg);color:#000}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.tbl th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);font-weight:400;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr.main{cursor:pointer}.tbl tr.main:hover td{background:rgba(255,255,255,.03)}
+.tbl td small{display:block;color:var(--mute);font-size:12px;margin-top:2px}
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid var(--line)}
+.pill.paid{color:#0b2b1a;background:var(--ok);border-color:var(--ok)}.pill.created{color:var(--warn);border-color:rgba(255,204,102,.4)}
+.pill.new{color:#000;background:var(--fg)}.pill.replied{color:var(--ok);border-color:rgba(107,227,160,.4)}
+tr.det td{background:#070708;font-size:13px;line-height:1.6;color:#cfcfcc}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 24px}
+.dgrid b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--mute);font-weight:400;text-transform:uppercase;margin-top:6px}
+.empty{padding:28px;text-align:center;color:var(--mute);font-size:14px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}header{padding:12px 16px}main{padding:20px 16px 60px}.tools input[type=search]{width:100%}}
+</style>
+</head>
+<body>
+<div id="login">
+  <form class="lcard" id="lf">
+    <img src="assets/logo.png" alt="Hexstar Universe">
+    <h1>Admin sign in</h1>
+    <input type="password" id="pw" placeholder="Admin password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Sign in</button>
+    <div class="msg" id="lmsg" role="alert"></div>
+  </form>
+</div>
+
+<div id="app">
+  <header><img src="assets/logo.png" alt="Hexstar Universe"><div class="r"><small id="upd"></small><button class="btn ghost" id="refresh">Refresh</button><button class="btn ghost" id="logout">Sign out</button></div></header>
+  <main>
+    <div id="notes"></div>
+    <div class="kpis" id="kpis"></div>
+
+    <h2>Visitors</h2>
+    <div class="grid2">
+      <div class="card"><h3>Last 30 days</h3><svg class="chart" id="chart" viewBox="0 0 600 220" preserveAspectRatio="none"></svg>
+        <div class="legend"><span style="--c:#f2f2f0">Visits</span><span style="--c:#ff7a1a">Unique visitors</span></div></div>
+      <div class="card"><h3>Visitors by country</h3><div id="countries"></div></div>
+    </div>
+
+    <h2>Orders <div class="tools"><div class="seg" id="ofilter"><button data-f="all" class="on">All</button><button data-f="paid">Paid</button><button data-f="created">Not paid</button></div>
+      <input type="search" id="osearch" placeholder="Search name, email, ID"><button class="btn ghost" id="ocsv">Export CSV</button></div></h2>
+    <div class="twrap"><table class="tbl"><thead><tr><th>Date</th><th>Customer</th><th>Kit</th><th>Paid</th><th>Status</th><th>Ships to</th><th>Business</th></tr></thead><tbody id="orows"></tbody></table></div>
+
+    <h2>Enquiries <div class="tools"><input type="search" id="isearch" placeholder="Search"><button class="btn ghost" id="icsv">Export CSV</button></div></h2>
+    <div class="twrap"><table class="tbl"><thead><tr><th>Date</th><th>From</th><th>Topic</th><th>Message</th><th>Status</th></tr></thead><tbody id="irows"></tbody></table></div>
+  </main>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let TOKEN=null,DATA=null,ofil='all';
+try{TOKEN=sessionStorage.getItem('hx_admin')}catch(e){}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let DN=null;try{DN=new Intl.DisplayNames(['en'],{type:'region'})}catch(e){}
+const cname=c=>c==='XX'||!c?'Unknown':(DN?DN.of(c):c);
+const flag=c=>c&&c.length===2&&c!=='XX'?String.fromCodePoint(...[...c].map(x=>127397+x.charCodeAt(0))):'🌐';
+const money=(a,cur)=>cur==='USD'?'$'+(a/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'₹'+(a/100).toLocaleString('en-IN');
+const dt=t=>new Date(t).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const addr=a=>a?[a.line1,a.line2,a.city,a.state,a.postal,a.country].filter(Boolean).join(', '):'';
+
+async function api(method,bodyObj){const r=await fetch('/api/admin',{method,headers:{'Content-Type':'application/json',...(TOKEN?{Authorization:'Bearer '+TOKEN}:{})},body:bodyObj?JSON.stringify(bodyObj):undefined});
+  let j={};try{j=await r.json()}catch(e){}if(r.status===401&&bodyObj?.action!=='login'){signOut();throw new Error('Session expired');}if(!r.ok)throw new Error(j.error||'Request failed');return j;}
+$('lf').addEventListener('submit',async e=>{e.preventDefault();$('lmsg').textContent='';try{const j=await api('POST',{action:'login',password:$('pw').value});TOKEN=j.token;try{sessionStorage.setItem('hx_admin',TOKEN)}catch(e){}$('pw').value='';load();}catch(err){$('lmsg').textContent=err.message;}});
+function signOut(){TOKEN=null;try{sessionStorage.removeItem('hx_admin')}catch(e){}$('app').style.display='none';$('login').style.display='grid';}
+$('logout').onclick=signOut;$('refresh').onclick=()=>load();
+
+async function load(){try{DATA=await api('GET');}catch(e){if(TOKEN){$('lmsg').textContent=e.message;}return;}
+  $('login').style.display='none';$('app').style.display='block';$('upd').textContent='Updated '+new Date().toLocaleTimeString();render();}
+
+function render(){const d=DATA,notes=[];
+  if(!d.setup.db)notes.push('The database isn\'t connected yet, so no orders, enquiries or visitors are being saved. In Vercel, add <b>Upstash for Redis</b> from Storage / Marketplace and connect it to this project, then redeploy.');
+  if(!d.setup.mail)notes.push('Emails are off. Add <b>RESEND_API_KEY</b>, <b>MAIL_FROM</b> and <b>ADMIN_EMAIL</b> in Vercel → Settings → Environment Variables.');
+  $('notes').innerHTML=notes.map(n=>`<div class="note">${n}</div>`).join('');
+  const O=d.orders||[],paid=O.filter(o=>o.status==='paid'),inr=paid.filter(o=>o.currency==='INR').reduce((s,o)=>s+o.amount,0),usd=paid.filter(o=>o.currency==='USD').reduce((s,o)=>s+o.amount,0);
+  const units=paid.reduce((s,o)=>s+(o.qty||1),0),v=d.visitors||{total:0,unique:0,days:[],countries:{}},td=(v.days||[]).slice(-1)[0]||{visits:0,unique:0};
+  const conv=v.unique?((paid.length/v.unique)*100).toFixed(1)+'%':'–';
+  const K=[['Paid pre-orders',paid.length,units+' kit'+(units===1?'':'s')],['Booking revenue ₹',money(inr,'INR'),'India'],['Booking revenue $',money(usd,'USD'),'International'],
+    ['Unfinished checkouts',O.length-paid.length,'Started, not paid'],['Total visits',(v.total||0).toLocaleString('en-IN'),'All time'],['Unique visitors',(v.unique||0).toLocaleString('en-IN'),'Conversion '+conv],
+    ['Today',td.visits,td.unique+' unique'],['Enquiries',(d.inquiries||[]).length,(d.inquiries||[]).filter(q=>q.status==='new').length+' new']];
+  $('kpis').innerHTML=K.map(([a,b,c])=>`<div class="kpi"><small>${a}</small><b>${esc(b)}</b><i>${esc(c)}</i></div>`).join('');
+  // chart
+  const days=v.days||[],mx=Math.max(1,...days.map(x=>x.visits));const bw=600/Math.max(1,days.length);
+  $('chart').innerHTML=days.map((x,i)=>`<rect x="${(i*bw+bw*.18).toFixed(1)}" y="${(200-x.visits/mx*180).toFixed(1)}" width="${(bw*.64).toFixed(1)}" height="${(x.visits/mx*180).toFixed(1)}" rx="2" fill="#f2f2f0" opacity=".85"><title>${x.d}: ${x.visits} visits, ${x.unique} unique</title></rect>`).join('')
+    +`<polyline fill="none" stroke="#ff7a1a" stroke-width="2" points="${days.map((x,i)=>`${(i*bw+bw/2).toFixed(1)},${(200-x.unique/mx*180).toFixed(1)}`).join(' ')}"/>`
+    +`<line x1="0" y1="200.5" x2="600" y2="200.5" stroke="rgba(255,255,255,.15)"/>`+(days.length?`<text x="2" y="216" fill="#8a8a88" font-size="10">${days[0].d}</text><text x="598" y="216" fill="#8a8a88" font-size="10" text-anchor="end">${days[days.length-1].d}</text>`:'');
+  const C=Object.entries(v.countries||{}).sort((a,b)=>b[1]-a[1]),cm=Math.max(1,...C.map(x=>x[1]));
+  $('countries').innerHTML=C.length?C.slice(0,20).map(([c,n])=>`<div class="crow"><span>${flag(c)}</span><div>${esc(cname(c))}<div class="bar" style="width:${(n/cm*100).toFixed(1)}%"></div></div><span class="n">${n.toLocaleString('en-IN')}</span></div>`).join(''):'<div class="empty">No visits recorded yet.</div>';
+  renderOrders();renderInq();}
+
+function orderRows(){const q=$('osearch').value.trim().toLowerCase();return (DATA.orders||[]).filter(o=>(ofil==='all'||o.status===ofil)&&(!q||JSON.stringify(o).toLowerCase().includes(q)));}
+function renderOrders(){const R=orderRows();
+  $('orows').innerHTML=R.length?R.map((o,i)=>{const c=o.contact||{},b=o.business;return `<tr class="main" data-i="${i}"><td>${dt(o.created)}<small class="mono">${esc(o.id)}</small></td><td>${esc(c.name)}<small>${esc(c.email)} · ${esc(c.phone)}</small></td>
+    <td>${esc(o.kit)} × ${o.qty||1}</td><td class="mono">${money(o.amount,o.currency)}</td><td><span class="pill ${o.status}">${o.status==='paid'?'Paid':'Not paid'}</span></td>
+    <td>${esc(o.shipping?(o.shipping.city+', '+cname(o.shipping.country)):(o.shippingText||''))}</td><td>${b?esc(b.company)+(b.gstin?'<small class="mono">'+esc(b.gstin)+'</small>':''):'–'}</td></tr>
+    <tr class="det" data-d="${i}" hidden><td colspan="7"><div class="dgrid"><div><b>Shipping address</b>${esc(o.shipping?addr(o.shipping):o.shippingText)}</div><div><b>Billing address</b>${esc(o.billingSame===false&&o.billing?addr(o.billing):'Same as shipping')}</div>
+    <div><b>Payment ID</b><span class="mono">${esc(o.paymentId||'–')}</span></div><div><b>Paid at</b>${o.paidAt?dt(o.paidAt):'–'} ${o.confirmedBy?'('+esc(o.confirmedBy)+')':''}</div><div><b>Visitor country</b>${esc(cname(o.country))}</div><div><b>Confirmation email</b>${o.mailed?'Sent':'Not sent'}</div></div></td></tr>`;}).join(''):'<tr><td colspan="7" class="empty">No orders yet.</td></tr>';
+  document.querySelectorAll('#orows tr.main').forEach(tr=>tr.onclick=()=>{const d=document.querySelector(`#orows tr[data-d="${tr.dataset.i}"]`);d.hidden=!d.hidden;});}
+function renderInq(){const q=$('isearch').value.trim().toLowerCase();const R=(DATA.inquiries||[]).filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));
+  $('irows').innerHTML=R.length?R.map(x=>`<tr><td>${dt(x.created)}<small>${esc(cname(x.country))}</small></td><td>${esc(x.name)}<small><a href="mailto:${esc(x.email)}" style="color:inherit">${esc(x.email)}</a> · ${esc(x.phone)}${x.org?' · '+esc(x.org):''}</small></td>
+    <td>${esc(x.topic)}</td><td style="max-width:420px;white-space:pre-wrap">${esc(x.message)}</td>
+    <td><select data-id="${esc(x.id)}" style="width:auto;padding:6px 30px 6px 10px">${['new','replied','closed'].map(s=>`<option value="${s}" ${x.status===s?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}</select></td></tr>`).join(''):'<tr><td colspan="5" class="empty">No enquiries yet.</td></tr>';
+  document.querySelectorAll('#irows select').forEach(s=>s.onchange=async()=>{try{await api('POST',{action:'inquiry-status',id:s.dataset.id,status:s.value});const it=DATA.inquiries.find(x=>x.id===s.dataset.id);if(it)it.status=s.value;render();}catch(e){alertBox(e.message);}});}
+function alertBox(t){const n=document.createElement('div');n.className='note';n.textContent=t;$('notes').prepend(n);setTimeout(()=>n.remove(),5000);}
+document.querySelectorAll('#ofilter button').forEach(b=>b.onclick=()=>{ofil=b.dataset.f;document.querySelectorAll('#ofilter button').forEach(x=>x.classList.toggle('on',x===b));renderOrders();});
+$('osearch').oninput=renderOrders;$('isearch').oninput=renderInq;
+function csv(rows,name){const s=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+s],{type:'text/csv'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+$('ocsv').onclick=()=>csv([['Date','Order ID','Status','Name','Email','Phone','Kit','Qty','Paid','Currency','Payment ID','Shipping','Billing','Company','GSTIN'],...orderRows().map(o=>[new Date(o.created).toISOString(),o.id,o.status,o.contact?.name,o.contact?.email,o.contact?.phone,o.kit,o.qty||1,(o.amount/100).toFixed(2),o.currency,o.paymentId,o.shipping?addr(o.shipping):o.shippingText,o.billingSame===false&&o.billing?addr(o.billing):'Same as shipping',o.business?.company,o.business?.gstin])],'hexstar-orders.csv');
+$('icsv').onclick=()=>csv([['Date','Name','Email','Phone','Organisation','Topic','Message','Country','Status'],...(DATA.inquiries||[]).map(x=>[new Date(x.created).toISOString(),x.name,x.email,x.phone,x.org,x.topic,x.message,x.country,x.status])],'hexstar-enquiries.csv');
+if(TOKEN)load();
+setInterval(()=>{if(TOKEN&&document.visibilityState==='visible')load();},60000);
+</script>
+</body>
+</html>

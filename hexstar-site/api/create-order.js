@@ -1,6 +1,7 @@
 // POST /api/create-order: validates the checkout form and creates a Razorpay order.
 // Needs RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET set as Vercel environment variables.
 const { KITS, bookingAmount, validate, line } = require('./_shop');
+const { saveOrder } = require('./_orders');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'Method not allowed' }); }
@@ -32,6 +33,9 @@ module.exports = async (req, res) => {
     });
     const data = await r.json();
     if (!r.ok) return res.status(502).json({ error: data?.error?.description || 'Could not start the payment.' });
+    // keep a full copy for the admin panel (status: created until the payment is verified)
+    await saveOrder({ id: data.id, created: Date.now(), status: 'created', amount: data.amount, currency: data.currency, kitId: v.kit, kit: KITS[v.kit].name, qty: v.qty,
+      contact: v.contact, shipping: v.shipping, billingSame: v.billingSame, billing: v.billingSame ? null : v.billing, business: v.business, country: req.headers['x-vercel-ip-country'] || '' }).catch(() => {});
     return res.status(200).json({ order_id: data.id, amount: data.amount, currency: data.currency, key_id: keyId, kit: KITS[v.kit].name, qty: v.qty });
   } catch (e) {
     return res.status(502).json({ error: 'Payment service unreachable. Please try again.' });

@@ -262,6 +262,7 @@ function done(pid,j){try{localStorage.removeItem('hx_checkout')}catch(e){}
   $('form-view').style.display='none';$('done').style.display='block';
   $('doneText').textContent=`Thank you. Your ${j.kit} pre-order${j.qty>1?' (× '+j.qty+')':''} is booked, and a receipt from Razorpay is on its way to your email. We'll write to you before shipping with the balance due.`;
   $('doneRef').textContent='Payment ID · '+pid;window.scrollTo(0,0);}
+try{if(!sessionStorage.getItem('hx_seen_co')){sessionStorage.setItem('hx_seen_co','1');fetch('/api/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:'/checkout'}),keepalive:true}).catch(()=>{});}}catch(e){}
 </script>
 </body>
 </html>

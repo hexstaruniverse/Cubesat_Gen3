@@ -22,21 +22,38 @@ Any static host works (Netlify, Vercel, GitHub Pages, cPanel, S3, ...). Upload t
 - `docs/`: datasheet PDFs linked from the Datasheets section.
 - `tools/`: the Python scripts that generated the assets (Gerber rasteriser, component layout, datasheets). They need `numpy`, `opencv-python`, `openpyxl` and `reportlab`. Edit the input/output paths at the top of each script before running.
 
-## Pre-orders and payments (Razorpay)
-`checkout.html` collects contact details, shipping and billing addresses, and optional business details (company name, GSTIN). It then opens Razorpay's secure checkout. Card, UPI and netbanking details are entered on Razorpay, never on this site.
+## Backend: payments, emails, admin panel, enquiries
+Everything runs as small Vercel functions in `api/` (files starting with `_` are shared code, not URLs):
+- `create-order.js`: validates the checkout form, prices it on the server, creates the Razorpay order and saves it.
+- `verify.js`: checks the payment signature, marks the order paid and sends the two emails (customer + admin).
+- `razorpay-webhook.js`: the same confirmation, sent by Razorpay itself, so an order is never missed if the customer closes the tab. Emails are sent only once per order.
+- `inquiry.js`: the Enquiry form (name, email, phone, organisation, topic, message). Saves it, emails the admin and sends the customer a copy. Rate-limited, with a spam trap.
+- `track.js`: counts visits by day, country and page. No IP addresses or cookies are stored.
+- `admin.js` + `admin.html`: the admin panel at `/admin.html` (orders, visitors by country, enquiries, CSV export). Password protected.
+- `geo.js`: the visitor's country, used to show ₹ or $.
 
-The server side is three small Vercel functions in `api/`:
-- `api/create-order.js`: validates the form, works out the price on the server, and creates a Razorpay order. Customer details are saved in the order's notes, so you'll see them in your Razorpay dashboard.
-- `api/verify.js`: checks the Razorpay payment signature before showing the success screen.
-- `api/geo.js`: returns the visitor's country, used to pick ₹ or $.
+Prices, the ₹2,000 booking and the rate (1 USD = 115 INR) are in `api/_shop.js`. Email wording is in `api/_orders.js` and `api/inquiry.js`; the email picture is `assets/email-cubesat.jpg`.
 
-Prices, the ₹2,000 booking amount and the rate (1 USD = 115 INR) are set in `api/_shop.js`. Change them there and in the page text.
+### One-time setup
+1. **Database.** In Vercel open the project → Storage → Create → *Upstash for Redis* (free plan is fine) → connect it to this project. It adds `KV_REST_API_URL` and `KV_REST_API_TOKEN` automatically.
+2. **Resend (email).** Sign up at resend.com → Domains → add your domain and add the DNS records it shows → API Keys → create one. Until the domain is verified, Resend only delivers to your own Resend account email.
+3. **Razorpay webhook.** Razorpay dashboard → Settings → Webhooks → Add: URL `https://YOUR-SITE/api/razorpay-webhook`, events `payment.captured` and `order.paid`, and choose a secret.
+4. **Environment variables** (Vercel → Settings → Environment Variables):
 
-**Setup (one time):** in Vercel, open the project, go to Settings → Environment Variables, and add:
-- `RAZORPAY_KEY_ID`: your key id (starts with `rzp_live_` or `rzp_test_`)
-- `RAZORPAY_KEY_SECRET`: your key secret
+| Name | Value |
+|---|---|
+| `RAZORPAY_KEY_ID` | key id (`rzp_test_...` first, `rzp_live_...` later) |
+| `RAZORPAY_KEY_SECRET` | the secret shown with that key id |
+| `RAZORPAY_WEBHOOK_SECRET` | the secret you chose in step 3 |
+| `RESEND_API_KEY` | `re_...` |
+| `MAIL_FROM` | e.g. `Hexstar Universe <orders@yourdomain.com>` (verified domain) |
+| `ADMIN_EMAIL` | where order and enquiry alerts go (comma-separate several) |
+| `ADMIN_PASSWORD` | a long password for `/admin.html` |
+| `SITE_URL` | optional, e.g. `https://hexstaruniverse.com` (used for email image links) |
 
-Then redeploy. Use test keys first to try a payment, then switch to live keys. For USD payments, international payments must be enabled on your Razorpay account.
+5. Redeploy, then place a test order with a Razorpay test card and check both inboxes and `/admin.html`.
+
+Never put keys in the code or in GitHub; only in Vercel's environment variables. Card, UPI and netbanking details are entered on Razorpay, never on this site. For USD payments, international payments must be enabled on your Razorpay account.
 
 ## Instagram reel ring
 The "Follow the mission" section shows your reels on a 3D ring that rotates in a loop. Edit `INSTAGRAM` in `index.html`:

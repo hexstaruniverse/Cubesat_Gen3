@@ -263,6 +263,11 @@ footer{align-items:center}
 .rbox.show .bar{opacity:1}
 .rbox .x{position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:20px;cursor:pointer;opacity:0;transition:opacity .3s}
 .rbox.show .x{opacity:1}
+#count{position:fixed;left:0;right:0;top:50%;z-index:7;transform:translateY(-50%);text-align:center;pointer-events:none;opacity:0}
+#count b{display:block;font-size:clamp(140px,24vw,320px);font-weight:300;letter-spacing:-.06em;line-height:1;text-shadow:0 0 60px rgba(255,255,255,.35)}
+#count small{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.4em;color:#d9d9d6;margin-top:6px}
+#flash{position:fixed;inset:0;z-index:6;pointer-events:none;background:#fff;opacity:0}
+#fog{position:fixed;inset:0;z-index:6;pointer-events:none;opacity:0;background:radial-gradient(120% 90% at 50% 60%,#f4f6fa 0%,#dfe6f0 55%,#c9d3e2 100%)}
 /* loader */
 #load{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .8s}
 #load b{font-size:56px;font-weight:400;letter-spacing:-.04em}
@@ -365,6 +370,21 @@ footer{align-items:center}
   </div>
 </div>
 <div class="panel" data-i="8">
+  <div class="eyebrow">Stratosphere · <b>31 km</b></div>
+  <h2>Balloon<br><span class="o">burst in…</span></h2>
+  <p class="lede">Up here the air is so thin the balloon has swelled to many times its launch size. Any moment now it pops.</p>
+</div>
+<div class="panel" data-i="9">
+  <div class="eyebrow">Recovery · <b>Parachute out</b></div>
+  <h2>Parachute<br><span class="o">deployed.</span></h2>
+  <p class="lede">The canopy snaps open and slows the fall. The CubeSat keeps sending telemetry and its GNSS position the whole way down, so you can find it.</p>
+</div>
+<div class="panel" data-i="10">
+  <div class="eyebrow">Descent</div>
+  <h2>Coming<br><span class="o">home.</span></h2>
+  <p class="lede">Back down through the atmosphere, past the clouds, to where every mission starts.</p>
+</div>
+<div class="panel" data-i="11">
   <div class="eyebrow">First production batch</div>
   <h2>Your<br>mission<br>starts <span class="o">here.</span></h2>
   <div class="stats">
@@ -376,7 +396,7 @@ footer{align-items:center}
     <div><b>18650</b><small>3.5 Ah Li-ion</small></div>
   </div>
 </div>
-<div class="cta" data-i="8">
+<div class="cta" data-i="11">
   <div class="eyebrow" style="margin:0">Pre-order price · <b>Mission kit</b></div>
   <div class="price"><span class="money" data-inr="39000">₹39,000</span> <s class="taxnote" style="text-decoration:none">+ GST</s></div>
   <div class="booknote">Pre-order today for just <b><span class="money" data-inr="2000">₹2,000</span></b>. Pay the rest before it ships.</div>
@@ -384,11 +404,12 @@ footer{align-items:center}
   <a class="btn ghost lg" href="#kits">Compare kits</a>
 </div>
 
+<div id="count" aria-hidden="true"><b></b><small></small></div><div id="flash"></div><div id="fog"></div>
 <div id="spots"></div>
 <svg id="lead"><line id="leadl" x1="0" y1="0" x2="0" y2="0" stroke="rgba(255,255,255,.5)" stroke-width="1" opacity="0"/></svg>
 <div id="tip"><div class="r"></div><div class="n"></div><div class="k"></div><p></p></div>
 
-<div id="hud"><b id="hudn">01</b><span class="bar"><i id="hudb"></i></span><span>09</span></div>
+<div id="hud"><b id="hudn">01</b><span class="bar"><i id="hudb"></i></span><span>12</span></div>
 <div id="scrollcue">KEEP SCROLLING<i></i></div>
 
 <main id="story">
@@ -401,6 +422,9 @@ footer{align-items:center}
   <section class="step tall" id="s6"></section>
   <section class="step tall" id="s7"></section>
   <section class="step tall" id="s8"></section>
+  <section class="step tall" id="s9"></section>
+  <section class="step tall" id="s10"></section>
+  <section class="step tall" id="s11"></section>
 </main>
 
 <div id="after">
@@ -645,7 +669,7 @@ vec3 env(vec3 d,float r){
 const FS=`#version 300 es
 precision highp float; precision highp sampler2DShadow;
 in vec3 vW; in vec3 vN; in vec2 vUV; in vec4 vLS;
-uniform vec3 uCam,uColor,uL,uSun; uniform float uRough,uMetal,uOpacity,uTex,uBump,uEmis,uShTx,uExp,uSpace;
+uniform vec3 uCam,uColor,uL,uSun; uniform float uRough,uMetal,uOpacity,uTex,uBump,uEmis,uShTx,uExp,uSpace,uDay;
 uniform sampler2D tCol,tOrm,tH; uniform sampler2DShadow tSh;
 out vec4 o;
 ${ENV}
@@ -678,12 +702,13 @@ void main(){
   vec3 envc=env(R,r);
   vec3 envs=vec3(.35,.5,.8)*smoothstep(.05,-.35,R.z)*mix(1.,.6,r)+vec3(.7,.85,1.)*smoothstep(.06,0.,abs(R.z+.09))*.5*(1.-r);
   float sr=max(dot(R,uSun),0.);envs+=vec3(1.,.97,.9)*(pow(sr,600.)*30.*(1.-r)+pow(sr,24.)*1.4*(1.-r*.6));
+  envs+=uDay*vec3(.45,.6,.95)*smoothstep(-.15,.7,R.z)*mix(1.,.55,r);
   envc=mix(envc,envs,uSpace);
   c+=envc*envBRDF(F0,r,nv)*mix(.55,1.,sh);
   c+=lightC(N,V,vec3(0.,0.,-1.),base,r,m,F0,1.3*uSpace)*vec3(.6,.75,1.);
   c+=lightC(N,V,uSun,base,r,m,F0,2.2*uSpace)*vec3(1.,.9,.75);
   float hemi=.5+.5*N.z;
-  c+=(1.-m)*base*mix(.04+.12*hemi*hemi,.03+.10*(1.-hemi),uSpace);
+  c+=(1.-m)*base*mix(.04+.12*hemi*hemi,.03+.10*(1.-hemi)+uDay*.16*hemi,uSpace);
   c+=base*uEmis;
   c=aces(c*uExp*.9);
   o=vec4(pow(c,vec3(1./2.2)),uOpacity);
@@ -695,16 +720,17 @@ float n3(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
 float fbm(vec3 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n3(p);p=p*2.03+vec3(1.7,9.2,3.1);a*=.5;}return v;}
 `;
 const BGFS=`#version 300 es
-precision highp float; uniform sampler2D tCloud; uniform vec2 uRes; uniform vec2 uC; uniform mat4 uInvVP; uniform vec3 uEye; uniform float uSpace,uEdge,uTime; uniform vec4 uVPR; uniform vec3 uSun; out vec4 o;
+precision highp float; uniform sampler2D tCloud; uniform vec2 uRes; uniform vec2 uC; uniform mat4 uInvVP; uniform vec3 uEye; uniform float uSpace,uEdge,uTime,uAlt; uniform vec4 uVPR; uniform vec3 uSun; out vec4 o;
 ${NOISE}
 float edgeMask(){vec2 q=(gl_FragCoord.xy-uVPR.xy)/uVPR.zw;return mix(1.,smoothstep(0.,.14,q.x)*smoothstep(0.,.14,1.-q.x)*smoothstep(0.,.16,q.y)*smoothstep(0.,.12,1.-q.y),uEdge);}
 vec3 space(vec3 d){
-  const float R=6371.,H=31.;vec3 O=vec3(0,0,R+H);
+  const float R=6371.;float H=max(uAlt,.5);vec3 O=vec3(0,0,R+H);float day=smoothstep(24.,5.,H);
   float dip=acos(R/(R+H));float e=asin(clamp(d.z,-1.,1.))+dip; // elevation above the horizon
   // sky: thin saturated blue glow on the limb, falling off fast into black
   float ep=max(e,0.);
   vec3 sky=vec3(.16,.58,1.)*exp(-ep/.012)*1.9+vec3(.02,.12,.62)*exp(-ep/.05)*.95+vec3(.004,.02,.12)*exp(-ep/.16)*.6;
   sky+=vec3(.55,.85,1.)*exp(-ep/.0035)*.9;
+  vec3 sday=mix(vec3(.62,.77,1.),vec3(.10,.32,.90)*.9,smoothstep(0.,.20,ep));sky=mix(sky,sday,day);
   vec3 q=d*300.;vec3 id=floor(q);float hs=h3(id);if(hs>.998){float st=1.-smoothstep(0.,.35,length(fract(q)-.5));sky+=vec3(st*(hs-.998)*120.)*smoothstep(.3,.6,e);}
   vec3 ec=vec3(.75,.82,.95);
   float b=dot(O,d),c=dot(O,O)-R*R,disc=b*b-c;
@@ -718,11 +744,11 @@ vec3 space(vec3 d){
     vec3 scol=mix(t1,t2,.35+.3*smoothstep(.35,.65,big))*1.7*(.82+.36*big);scol=pow(scol,vec3(1.12))*1.25;
     float sun=clamp(dot(n,normalize(uSun+vec3(0,0,1.4)))*.4+.75,0.,1.2);scol*=sun;
     float graze=1.-clamp(dot(n,-d),0.,1.);
-    scol=mix(scol,vec3(.40,.60,1.),pow(graze,7.)*.75);   // blue haze toward the horizon
+    scol=mix(scol,vec3(.40,.60,1.),pow(graze,7.)*.75);scol=mix(scol,vec3(.78,.86,1.),pow(graze,3.)*.55*day);   // blue haze toward the horizon
     ec=scol;}
   vec3 col=mix(ec,sky,smoothstep(-.003,.002,e));
   return col;}
-vec3 sunc(vec3 d){float sd=max(dot(d,uSun),0.);return vec3(1.,.97,.9)*(smoothstep(.99994,.99997,sd)*40.+pow(sd,5000.)*6.+pow(sd,600.)*.45+pow(sd,40.)*.03);}
+vec3 sunc(vec3 d){float sd=max(dot(d,uSun),0.);float day=smoothstep(24.,5.,max(uAlt,.5));return vec3(1.,.97,.9)*(pow(sd,8.)*.22*day+smoothstep(.99994,.99997,sd)*40.+pow(sd,5000.)*6.+pow(sd,600.)*.45+pow(sd,40.)*.03);}
 void main(){vec2 p=(gl_FragCoord.xy/uRes-uC)*vec2(uRes.x/uRes.y,1.);float d=length(p);
   float g=.085*(1.-smoothstep(0.,1.05,d))+.012*(1.-smoothstep(.3,1.6,d));
   vec3 c=vec3(g*.98,g*.98,g);
@@ -857,9 +883,10 @@ function tex(img,srgb){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t
 
 /* ============ scene graph ============ */
 const nodes={};
-function node(name,parent){const n={name,parent:parent?nodes[parent]:null,parts:[],pivot:[0,0,0],p:[0,0,0],r:[0,0,0],o:1,world:M4.id()};nodes[name]=n;return n;}
+function node(name,parent){const n={name,parent:parent?nodes[parent]:null,parts:[],pivot:[0,0,0],p:[0,0,0],r:[0,0,0],s:[1,1,1],o:1,world:M4.id()};nodes[name]=n;return n;}
 function updateWorld(n){if(n._f===frameId)return n.world;n._f=frameId;
-  const local=M4.mul(M4.T(n.p[0]+n.pivot[0],n.p[1]+n.pivot[1],n.p[2]+n.pivot[2]),M4.mul(M4.R(n.r[0],n.r[1],n.r[2]),M4.T(-n.pivot[0],-n.pivot[1],-n.pivot[2])));
+  const Sm=M4.id();Sm[0]=n.s[0];Sm[5]=n.s[1];Sm[10]=n.s[2];
+  const local=M4.mul(M4.T(n.p[0]+n.pivot[0],n.p[1]+n.pivot[1],n.p[2]+n.pivot[2]),M4.mul(M4.R(n.r[0],n.r[1],n.r[2]),M4.mul(Sm,M4.T(-n.pivot[0],-n.pivot[1],-n.pivot[2]))));
   n.world=n.parent?M4.mul(updateWorld(n.parent),local):local; n.op=(n.parent?n.parent.op:1)*n.o; return n.world;}
 let frameId=0;
 
@@ -891,10 +918,16 @@ const STATES=[
  {nodes:merge(explode(1,{so:0,bo:0,spread:[40,120,200],top:180,base:-90,pan:130,rail:130}),{EPS:{p:[0,0,40],o:1}}),cam:{t:[0,0,Z.EPS+43],az:-58,el:50,d:310},shift:[.3,.02],md:1.75,msy:-0.22,sway:0,ground:.25,dim:0,focus:'EPS'},
  // battery (flip)
  {nodes:merge(explode(1,{so:0,bo:0,spread:[40,120,200],top:180,base:-90,pan:130,rail:130}),{EPS:{p:[0,0,58],r:[Math.PI+.62,0,.18],o:1}}),cam:{t:[0,0,Z.EPS+56],az:-78,el:20,d:420},shift:[.36,.02],md:1.8,msy:-0.26,sway:0,ground:.3,dim:0,focus:'BAT'},
- // near space (hanging from the balloon line)
- {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,104],az:-36,el:9,d:640},shift:[.24,.02],md:1.8,msy:-.3,sway:1,ground:0,space:1},
- // final CTA
- {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,130],az:-22,el:9.5,d:980},shift:[.02,0],md:1.9,msy:.04,sway:1,ground:0,space:1},
+ // 7 near space (hanging from the balloon line)
+ {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,104],az:-36,el:9,d:640},shift:[.24,.02],md:1.8,msy:-.3,sway:1,ground:0,space:1,alt:31},
+ // 8 pull back: balloon in view, countdown + burst happen on the way to 9
+ {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,520],az:-36,el:6,d:2900},shift:[.2,0],md:1.6,msy:-.1,sway:.6,ground:0,space:1,alt:31},
+ // 9 parachute open, still high
+ {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,420],az:-30,el:6,d:2300},shift:[.2,0],md:1.6,msy:-.1,sway:1,ground:0,space:1,alt:26},
+ // 10 low over the clouds, blue sky
+ {nodes:{...explode(0),tether:{o:1}},cam:{t:[0,0,380],az:-24,el:4,d:1900},shift:[.2,0],md:1.6,msy:-.1,sway:1,ground:0,space:1,alt:3},
+ // 11 landed on the desk
+ {nodes:{...explode(0),tether:{o:1}},cam:{t:[-110,70,120],az:-56,el:16,d:1300},shift:[.12,.16],md:1.7,msy:.02,sway:0,ground:1,space:0,alt:3,desk:1},
 ];
 const NODE_NAMES=[...Object.keys(PANELS),'rail0','rail1','rail2','rail3','top','base','EPS','OBC','LoRa','tether'];
 
@@ -1043,7 +1076,7 @@ async function init(){
       const o=tg.v.length/8;for(let k=0;k<=S;k++){const an=k/S*Math.PI*2,c=Math.cos(an),sn=Math.sin(an);const d=[n[0]*c+bb[0]*sn,n[1]*c+bb[1]*sn,n[2]*c+bb[2]*sn];
         tg.vert([a[0]+d[0]*r,a[1]+d[1]*r,a[2]+d[2]*r],d);tg.vert([b[0]+d[0]*r,b[1]+d[1]*r,b[2]+d[2]*r],d);}
       for(let k=0;k<S;k++){const q=o+k*2;tg.i.push(q,q+2,q+1,q+1,q+2,q+3);}};
-    const apex=[-6,-6,330+DZT];for(const [x,y] of [[-43,-43],[43,-43],[43,43],[-43,43]])seg([x,y,111.6+DZT],apex,.5);seg(apex,[-6,-6,6000],.8);
+    const apex=[-6,-6,330+DZT];for(const [x,y] of [[-43,-43],[43,-43],[43,43],[-43,43]])seg([x,y,111.6+DZT],apex,.5);
     tg.cyl(-6,-6,330+DZT,2.2,2.2,6,'z',16);add('tether',tg,'white');}
   // boards
   for(const b of bnames){
@@ -1082,6 +1115,7 @@ async function init(){
     bd.hotspots.forEach(h=>{h.x=X(h.x);h.y=Y(h.y);h.z=zb+h.z;});
   }
   CABLES.forEach(c=>{c.mesh=upload(tube(c,0,0));c.plug=upload(tube(c,0,1));drawList.push({node:nodes.top,mesh:c.mesh,mat:MAT.coax,dyn:c},{node:nodes.top,mesh:c.plug,mat:MAT.brass,dyn:c,plugMesh:1});});
+  buildFlight();buildGround();
   buildSpots();
   // BAT spots relative to EPS top surface
   spotSets.BAT.forEach(s=>{s.z=Z.EPS+1.6+s.z;});
@@ -1111,8 +1145,88 @@ function blendStates(sp){
   const ca=A.cam,cb=B.cam;
   out.cam={t:[0,1,2].map(k=>lerp(ca.t[k],cb.t[k],t)),az:lerp(ca.az,cb.az,t),el:lerp(ca.el,cb.el,t),d:lerp(ca.d,cb.d,t)};
   out.shift=[lerp(A.shift[0],B.shift[0],t),lerp(A.shift[1],B.shift[1],t)];
-  out.sway=lerp(A.sway,B.sway,t);out.space=lerp(A.space||0,B.space||0,t);out.md=lerp(A.md,B.md,t);out.msy=lerp(A.msy,B.msy,t);out.ground=lerp(A.ground,B.ground,t);
+  out.sway=lerp(A.sway,B.sway,t);out.space=lerp(A.space||0,B.space||0,t);out.alt=lerp(A.alt??31,B.alt??31,t);out.desk=lerp(A.desk||0,B.desk||0,t);out.md=lerp(A.md,B.md,t);out.msy=lerp(A.msy,B.msy,t);out.ground=lerp(A.ground,B.ground,t);
   return out;}
+
+/* ============ balloon burst, parachute, descent, landing ============ */
+const FL={ready:false};
+function flight(sp,st){
+  if(!FL.ready)return;
+  const u8=clamp(sp-8,0,1),u10=clamp(sp-10,0,1);
+  // balloon: visible from the stratosphere scenes until it bursts
+  const burstAt=.56,popped=sp>=8+burstAt;
+  const bo=sp<6.6?0:popped?0:1;
+  nodes.balloon.o=bo;nodes.tetherTop.o=bo;
+  const swell=sp<8?1:1+.10*smooth(.25,burstAt,u8);nodes.balloon.s=[swell,swell,swell*1.0];
+  // shreds fly out and fall
+  const k=sp<8+burstAt||sp>=9?-1:(u8-burstAt)/(1-burstAt);
+  nodes.shreds.o=k>0&&k<1?1-smooth(.6,1,k):0;
+  if(k>0&&k<1&&Math.abs(k-FL.lastK)>.002){FL.lastK=k;reup(FL.shredMesh,shredGeo(k));}
+  // parachute: deploys after the burst, collapses beside the CubeSat after landing
+  const dep=sp<8?0:sp<9?smooth(.62,.88,u8):1;const pop=dep*(1+.12*Math.sin(Math.min(1,dep)*Math.PI));
+  const col=smooth(.78,.94,u10)+(sp>=11?1:0);const cc=Math.min(1,col);
+  nodes.chute.o=dep>.02?1:0;
+  const ps=Math.max(.02,pop);nodes.chute.s=[lerp(ps,.8,cc),lerp(ps,.8,cc),lerp(ps,.07,cc)];
+  nodes.chute.r=[0,0,.4*cc];nodes.chute.p=[-80*cc,250*cc,-322*cc];
+  // free-fall jolt between burst and the canopy opening, and gentle swing under the canopy
+  const drop=sp>=8&&sp<9?-170*smooth(burstAt,.66,u8)*(1-smooth(.72,.9,u8)):0;
+  // landing: punch through a cloud layer, then come down onto the desk
+  const onDesk=sp>=10+.42;
+  nodes.root.p=[0,0,drop+(onDesk?lerp(1150,0,ease(smooth(.44,.80,u10))):0)];
+  if(sp>=8+.6&&sp<10.8)nodes.root.r=[.05*Math.sin(time*1.1),.04*Math.cos(time*.9),nodes.root.r[2]];
+  if(onDesk){nodes.tether.o=1-smooth(.74,.88,u10)-(sp>=11?1:0);if(nodes.tether.o<0)nodes.tether.o=0;}
+  st.space=sp>=10?(onDesk?0:1):st.space;st.desk=onDesk?1:0;st.ground=onDesk?1:st.ground;
+  FL.fog=sp>=10&&sp<11?smooth(.16,.40,u10)*(1-smooth(.44,.62,u10)):0;
+  FL.u8=sp>=8&&sp<9?u8:-1;
+}
+function shredGeo(k){const g=new Geo();const C=[-6,-6,760];
+  for(let i=0;i<FL.dirs.length;i++){const [d,sp,w]=FL.dirs[i];const r=250+760*k*sp;
+    const P=[C[0]+d[0]*r,C[1]+d[1]*r,C[2]+d[2]*r*1.1-1500*k*k];
+    let a=norm(cross(d,Math.abs(d[2])<.95?[0,0,1]:[1,0,0])),b=cross(d,a);const an=k*12*w;const ca=Math.cos(an),sa=Math.sin(an);
+    const A=[a[0]*ca+b[0]*sa,a[1]*ca+b[1]*sa,a[2]*ca+b[2]*sa],B=cross(d,A);const s1=34*(.6+w*.6),s2=16*(.6+w*.6);
+    const q=(x,y)=>[P[0]+A[0]*x+B[0]*y,P[1]+A[1]*x+B[1]*y,P[2]+A[2]*x+B[2]*y];
+    g.quadA(q(-s1,-s2),q(s1,-s2),q(s1,s2),q(-s1,s2),d);}
+  return g;}
+function deskTex(){const w=2048,h=1024;const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');const im=x.createImageData(w,h);const D=im.data;
+  for(let j=0;j<h;j++){const row=Math.sin(j*.021)*18+Math.sin(j*.0057+1.3)*44;for(let i=0;i<w;i++){
+    const wv=Math.sin(i*.0021+j*.004)*26+Math.sin(i*.0007)*60;const g=Math.sin((j+wv)*.16)*.5+.5,f=Math.sin((j+wv*1.3)*.031+Math.sin(i*.001)*2)*.5+.5;
+    const v=.55+.25*g*g+.2*f;const n=(Math.sin(i*12.9898+j*78.233)*43758.5453)%1*.06;const o=(j*w+i)*4;
+    const gr=.8+.2*Math.pow(Math.sin((j+wv*.8)*.47)*.5+.5,8);D[o]=Math.min(255,(38+40*v)*gr*(1-n));D[o+1]=Math.min(255,(23+24*v)*gr*(1-n));D[o+2]=Math.min(255,(14+12*v)*gr*(1-n));D[o+3]=255;}}
+  x.putImageData(im,0,0);const mk=(f)=>{const k=document.createElement('canvas');k.width=k.height=16;const y=k.getContext('2d');y.fillStyle=f;y.fillRect(0,0,16,16);return k;};
+  return {c:tex(c,1),o:tex(mk('rgb(255,150,0)'),0),h:tex(mk('#000'),0)};}
+function buildFlight(){
+  // balloon (latex, slightly teardrop) + the line up to it
+  node('balloon','root');nodes.balloon.pivot=[-6,-6,760];node('tetherTop','root');node('chute','root');nodes.chute.pivot=[-6,-6,330+DZT];node('shreds','root');
+  let g=new Geo();const C=[-6,-6,760],RB=240;const SEG=48,RING=32;const o0=g.v.length/8;
+  for(let a=0;a<=RING;a++){const th=a/RING*Math.PI;for(let b=0;b<=SEG;b++){const ph=b/SEG*Math.PI*2;
+    const sx=Math.sin(th)*Math.cos(ph),sy=Math.sin(th)*Math.sin(ph),cz=Math.cos(th);const taper=cz<0?1-.32*Math.pow(-cz,3):1;
+    g.vert([C[0]+sx*RB*taper,C[1]+sy*RB*taper,C[2]+cz*RB*1.12],norm([sx,sy,cz*.9]));}}
+  for(let a=0;a<RING;a++)for(let b=0;b<SEG;b++){const i0=o0+a*(SEG+1)+b,i1=i0+SEG+1;g.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}
+  g.cyl(-6,-6,760-RB*1.12-10,9,6,22,'z',20);
+  add('balloon',g,{c:[.86,.85,.82],r:.42,m:0});
+  const apex=[-6,-6,330+DZT];
+  g=new Geo();lineSeg(g,apex,[-6,-6,760-RB*1.12-18],.8);add('tetherTop',g,'white');
+  // parachute canopy: 16 gores, orange and white, plus suspension lines
+  const gA=new Geo(),gB=new Geo(),gL=new Geo();const top=[apex[0],apex[1],apex[2]+330];const RC=230,HC=120,G=16,ST=10;
+  for(let k=0;k<G;k++){const gg=k%2?gA:gB;const o=gg.v.length/8;
+    for(let a=0;a<=ST;a++){const th=a/ST*Math.PI/2;for(let b=0;b<=4;b++){const ph=(k+b/4)/G*Math.PI*2;const bul=1+.06*Math.sin(b/4*Math.PI);
+      gg.vert([top[0]+Math.sin(th)*Math.cos(ph)*RC*bul,top[1]+Math.sin(th)*Math.sin(ph)*RC*bul,top[2]+Math.cos(th)*HC],norm([Math.sin(th)*Math.cos(ph),Math.sin(th)*Math.sin(ph),Math.cos(th)*1.6]));}}
+    for(let a=0;a<ST;a++)for(let b=0;b<4;b++){const i0=o+a*5+b,i1=i0+5;gg.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}
+    const ph=k/G*Math.PI*2;lineSeg(gL,[top[0]+Math.cos(ph)*RC,top[1]+Math.sin(ph)*RC,top[2]],apex,.45);}
+  add('chute',gA,{c:[.95,.32,.06],r:.55,m:0});add('chute',gB,{c:[.9,.9,.88],r:.55,m:0});add('chute',gL,{c:[.85,.85,.82],r:.6,m:0});
+  // balloon shreds (rebuilt per frame while they fly)
+  FL.dirs=[];let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
+  for(let i=0;i<44;i++){const z=rnd()*2-1,ph=rnd()*Math.PI*2,r=Math.sqrt(1-z*z);FL.dirs.push([[r*Math.cos(ph),r*Math.sin(ph),z],.6+rnd()*.8,rnd()]);}
+  FL.shredMesh=upload(shredGeo(.01));drawList.push({node:nodes.shreds,mesh:FL.shredMesh,mat:{c:[.86,.85,.82],r:.5,m:0}});FL.lastK=-1;
+  // the desk it lands on
+  node('desk');const dt=deskTex();g=new Geo();g.quadA([-1300,-620,0],[1100,-620,0],[1100,820,0],[-1300,820,0],[0,0,1],[[0,1],[1,1],[1,0],[0,0]]);
+  FL.deskList=[{node:nodes.desk,mesh:upload(g),mat:{c:[1,1,1],r:.55,m:0,bump:0},tx:dt}];
+  g=new Geo();g.box(-100,100,-16,2400,1440,32);FL.deskList.push({node:nodes.desk,mesh:upload(g),mat:{c:[.06,.035,.02],r:.5,m:0}});
+  FL.ready=true;}
+function lineSeg(tg,a,b,r){const t=norm(sub(b,a));let n=norm(cross(t,Math.abs(t[2])<.9?[0,0,1]:[1,0,0])),bb=cross(t,n);const S=8;const o=tg.v.length/8;
+  for(let k=0;k<=S;k++){const an=k/S*Math.PI*2,c=Math.cos(an),sn=Math.sin(an);const d=[n[0]*c+bb[0]*sn,n[1]*c+bb[1]*sn,n[2]*c+bb[2]*sn];
+    tg.vert([a[0]+d[0]*r,a[1]+d[1]*r,a[2]+d[2]*r],d);tg.vert([b[0]+d[0]*r,b[1]+d[1]*r,b[2]+d[2]*r],d);}
+  for(let k=0;k<S;k++){const q=o+k*2;tg.i.push(q,q+2,q+1,q+1,q+2,q+3);}}
 
 /* ============ render ============ */
 let W=1,H=1,dpr=1;
@@ -1131,6 +1245,7 @@ function loop(now){
   // apply node states
   for(const n of NODE_NAMES){const s=st.nodes[n];nodes[n].p=s.p;nodes[n].r=s.r;nodes[n].o=s.o;}
   nodes.root.r=[0,0,st.sway*(.32*Math.sin(time*.35))+st.sway*.12*time%(Math.PI*2)*0];
+  flight(sp,st);
   // camera
   const mobile=innerWidth<820;
   const c=window.DBG?{...st.cam,...window.DBG}:st.cam;const az=(c.az+smx*4)*D2R,el=clamp(c.el-smy*2.5,-8,85)*D2R;let d=c.d*(mobile?st.md*(innerHeight/innerWidth>2.1?1.08:1):1)*(innerWidth/innerHeight<1.25&&!mobile?1.15:1);
@@ -1145,7 +1260,10 @@ function loop(now){
   const Lsun=norm([sun[0]*.45-fw[0]*.75,sun[1]*.45-fw[1]*.75,sun[2]*.45-fw[2]*.75+.35]);
   const LD=norm([lerp(Ldir[0],Lsun[0],st.space),lerp(Ldir[1],Lsun[1],st.space),lerp(Ldir[2],Lsun[2],st.space)]);
   const lc=[0,0,70],lp=[lc[0]+LD[0]*500,lc[1]+LD[1]*500,lc[2]+LD[2]*500];
-  const LVP=M4.mul(M4.ortho(-190,190,-190,190,100,1000),M4.look(lp,lc,[0,0,1]));
+  const onD=st.desk>.5;const LVP=onD?M4.mul(M4.ortho(-700,700,-700,700,100,2200),M4.look([-150+LD[0]*1000,120+LD[1]*1000,60+LD[2]*1000],[-150,120,60],[0,0,1])):M4.mul(M4.ortho(-190,190,-190,190,100,1000),M4.look(lp,lc,[0,0,1]));
+  let storyList=drawList;
+  if(FL.ready&&onD&&GS.built){nodes.gsroot.p=[-470,330,0];nodes.gsroot.r=[0,0,-.5];nodes.gslid.r=[82*D2R,0,0];nodes.gsroot.o=1;nodes.desk.o=1;
+    storyList=drawList.concat(FL.deskList,GS.list);frameId++;for(const it of storyList)updateWorld(it.node);}
   for(const it of drawList)updateWorld(it.node);
   if(TAG.front){ // hangs under gravity from the ring, whatever the board does
     const pw=M4.xf(nodes.EPS.world,[54.6,TAG.yc,TAG.zb-2]),rz=-nodes.root.r[2],c=Math.cos(rz),sn=Math.sin(rz);
@@ -1157,7 +1275,7 @@ function loop(now){
   const gTop=document.getElementById('ground').getBoundingClientRect().top;
   const groundMode=gTop<innerHeight*.42;
   if(!groundMode){
-    renderScene({list:drawList,VP,eye,LVP,L:LD,sun,vp:[0,0,W,H],ground:st.ground,space:st.space,edge:0,bc:[.5+sx*.5,.5+sy*.5+.04]});
+    renderScene({list:storyList,VP,eye,LVP,L:LD,sun,alt:st.alt,vp:[0,0,W,H],ground:onD?0:st.ground,space:st.space,edge:0,bc:[.5+sx*.5,.5+sy*.5+.04]});
   }else{
     gl.viewport(0,0,W,H);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);
     renderGround(dt);
@@ -1224,7 +1342,7 @@ function homog(src,dst){const A=[],b=[];for(let i=0;i<4;i++){const [x,y]=src[i],
   const h=Array(8);for(let i=n-1;i>=0;i--){let v=b[i];for(let c=i+1;c<n;c++)v-=A[i][c]*h[c];h[i]=v/A[i][i];}
   return `matrix3d(${h[0]},${h[3]},0,${h[6]},${h[1]},${h[4]},0,${h[7]},0,0,1,0,${h[2]},${h[5]},0,1)`;}
 function renderGround(dt){
-  if(!GS.built)buildGround();
+  if(!GS.built)buildGround();nodes.gsroot.p=[0,0,0];nodes.gsroot.o=1;
   const stage=document.getElementById('gstage');const gp=document.getElementById('gpin');const want=Math.round(stage.offsetHeight+innerHeight*1.6)+'px';if(gp.style.height!==want)gp.style.height=want;const r=stage.getBoundingClientRect();const dash=document.getElementById('dash');
   if(r.bottom<0||r.top>innerHeight){dash.style.visibility='hidden';return;}
   const vp=[Math.round(r.left*dpr),Math.round((innerHeight-r.bottom)*dpr),Math.round(r.width*dpr),Math.round(r.height*dpr)];
@@ -1264,7 +1382,7 @@ function renderScene(S){const {VP,eye,LVP}=S;
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(...S.vp);gl.enable(gl.SCISSOR_TEST);gl.scissor(...S.vp);
   // bg
   const bc=S.bc;
-  gl.disable(gl.DEPTH_TEST);gl.useProgram(PB.p);gl.uniform2f(PB.u.uRes,W,H);gl.uniform2f(PB.u.uC,bc[0],bc[1]);gl.uniformMatrix4fv(PB.u.uInvVP,false,M4.inv(VP));gl.uniform3fv(PB.u.uEye,eye);gl.uniform1f(PB.u.uSpace,S.space);gl.uniform1f(PB.u.uEdge,S.edge);gl.uniform4fv(PB.u.uVPR,S.vp);gl.uniform3fv(PB.u.uSun,S.sun||[0,0,1]);gl.uniform1f(PB.u.uTime,time);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,cloudTex);gl.uniform1i(PB.u.tCloud,4);gl.bindVertexArray(quad.vao);gl.drawElements(gl.TRIANGLES,6,gl.UNSIGNED_INT,0);
+  gl.disable(gl.DEPTH_TEST);gl.useProgram(PB.p);gl.uniform2f(PB.u.uRes,W,H);gl.uniform2f(PB.u.uC,bc[0],bc[1]);gl.uniformMatrix4fv(PB.u.uInvVP,false,M4.inv(VP));gl.uniform3fv(PB.u.uEye,eye);gl.uniform1f(PB.u.uSpace,S.space);gl.uniform1f(PB.u.uEdge,S.edge);gl.uniform4fv(PB.u.uVPR,S.vp);gl.uniform3fv(PB.u.uSun,S.sun||[0,0,1]);gl.uniform1f(PB.u.uTime,time);gl.uniform1f(PB.u.uAlt,S.alt??31);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,cloudTex);gl.uniform1i(PB.u.tCloud,4);gl.bindVertexArray(quad.vao);gl.drawElements(gl.TRIANGLES,6,gl.UNSIGNED_INT,0);
   // ground
   gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.clear(gl.DEPTH_BUFFER_BIT);
   gl.useProgram(PG.p);gl.uniformMatrix4fv(PG.u.uVP,false,VP);gl.uniformMatrix4fv(PG.u.uM,false,M4.id());gl.uniformMatrix4fv(PG.u.uLVP,false,LVP);
@@ -1273,7 +1391,7 @@ function renderScene(S){const {VP,eye,LVP}=S;
   if(S.space<.999){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.bindVertexArray(ground.vao);gl.drawElements(gl.TRIANGLES,6,gl.UNSIGNED_INT,0);gl.depthMask(true);gl.disable(gl.BLEND);}
   // objects
   gl.useProgram(P.p);gl.uniformMatrix4fv(P.u.uVP,false,VP);gl.uniformMatrix4fv(P.u.uLVP,false,LVP);gl.uniform3fv(P.u.uCam,eye);gl.uniform3fv(P.u.uL,S.L||Ldir);gl.uniform3fv(P.u.uSun,S.sun||[0,0,1]);
-  gl.uniform1f(P.u.uShTx,1/SH);gl.uniform1f(P.u.uExp,1.0);gl.uniform1f(P.u.uSpace,S.space);gl.uniform1i(P.u.tSh,3);gl.uniform1i(P.u.tCol,0);gl.uniform1i(P.u.tOrm,1);gl.uniform1i(P.u.tH,2);
+  gl.uniform1f(P.u.uShTx,1/SH);gl.uniform1f(P.u.uExp,1.0);gl.uniform1f(P.u.uSpace,S.space);gl.uniform1f(P.u.uDay,smooth(24,5,S.alt??31)*S.space);gl.uniform1i(P.u.tSh,3);gl.uniform1i(P.u.tCol,0);gl.uniform1i(P.u.tOrm,1);gl.uniform1i(P.u.tH,2);
   const draw=(it)=>{const m=it.mat;gl.uniformMatrix4fv(P.u.uM,false,it.node.world);gl.uniform3fv(P.u.uColor,m.c);gl.uniform1f(P.u.uRough,m.r);gl.uniform1f(P.u.uMetal,m.m);
     gl.uniform1f(P.u.uOpacity,Math.min(1,it.node.op));gl.uniform1f(P.u.uEmis,m.e||0);gl.uniform1f(P.u.uBump,m.bump||0);
     if(it.tx){gl.uniform1f(P.u.uTex,1);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,it.tx.c);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,it.tx.o);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,it.tx.h);}
@@ -1297,11 +1415,19 @@ function ui(sp,VP){
   const kt=document.getElementById('ground').getBoundingClientRect().top;const kf=smooth(innerHeight*.3,innerHeight*.85,kt);
   panels.forEach(p=>{const i=+p.dataset.i;const d=sp-i;const o=(1-smooth(.18,.42,Math.abs(d)))*kf;
     p.style.opacity=o.toFixed(3);p.style.transform=`translateY(${(-d*60).toFixed(1)}px)`;p.classList.toggle('live',o>.6);});
-  {const d=sp-8;const o=(1-smooth(.18,.42,Math.abs(d)))*kf;cta.style.opacity=o.toFixed(3);cta.style.transform=`translateY(${(-d*60).toFixed(1)}px)`;cta.classList.toggle('live',o>.6);}
+  {const d=sp-11;const o=(1-smooth(.18,.42,Math.abs(d)))*kf;cta.style.opacity=o.toFixed(3);cta.style.transform=`translateY(${(-d*60).toFixed(1)}px)`;cta.classList.toggle('live',o>.6);}
   // dim when kits section
   const k=kt;document.getElementById('dim').style.opacity=kt<innerHeight*.42?0:(1-smooth(innerHeight*.42,innerHeight*.98,k));
-  const idx=Math.round(clamp(sp,0,8));hudn.textContent=String(idx+1).padStart(2,'0');hudb.style.width=(clamp(sp/8,0,1)*100)+'%';
-  cue.style.opacity=1-smooth(.05,.3,sp);document.getElementById('hud').style.opacity=smooth(innerHeight*.5,innerHeight*.9,kt);
+  const idx=Math.round(clamp(sp,0,11));hudn.textContent=String(idx+1).padStart(2,'0');hudb.style.width=(clamp(sp/11,0,1)*100)+'%';
+  cue.style.opacity=1-smooth(.05,.3,sp);
+  { // countdown 3-2-1, burst flash, cloud white-out
+    const cEl=document.getElementById('count'),u=FL.u8??-1;let txt='',sub='',o=0,sc=1;
+    if(u>=0){const slots=[[.04,.19,'3'],[.19,.34,'2'],[.34,.49,'1']];for(const [a,b,t] of slots)if(u>=a&&u<b){const f=(u-a)/(b-a);txt=t;sub='T-MINUS';o=smooth(0,.15,f)*(1-smooth(.75,1,f));sc=1.25-.25*f;}
+      if(u>=.5&&u<.64){txt='';sub='BALLOON BURST';o=smooth(.5,.54,u)*(1-smooth(.6,.64,u));}
+      if(u>=.7&&u<.95){sub='PARACHUTE DEPLOYED';o=smooth(.7,.75,u)*(1-smooth(.9,.95,u));}}
+    cEl.querySelector('b').textContent=txt;cEl.querySelector('small').textContent=sub;cEl.style.opacity=o.toFixed(3);cEl.querySelector('b').style.transform=`scale(${sc.toFixed(3)})`;
+    document.getElementById('flash').style.opacity=u>=0?(Math.exp(-Math.pow((u-.56)/.010,2))*.5).toFixed(3):0;
+    document.getElementById('fog').style.opacity=(FL.fog||0).toFixed(3);}document.getElementById('hud').style.opacity=smooth(innerHeight*.5,innerHeight*.9,kt);
   let aft=-1;if(k<innerHeight*.5){aft=9;for(const [id,n] of [['kits',8],['docs',10]])if(document.getElementById(id).getBoundingClientRect().top<innerHeight*.5)aft=n;}
   navLinks.forEach(a=>{const n=+a.dataset.s;a.classList.toggle('on',aft>=0?n===aft:Math.abs(n-(idx>=3&&idx<=6?3:idx))<.5);});
   // hotspots

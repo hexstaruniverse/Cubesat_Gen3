@@ -1155,9 +1155,11 @@ function flight(sp,st){
   const u8=clamp(sp-8,0,1),u10=clamp(sp-10,0,1);
   // balloon: visible from the stratosphere scenes until it bursts
   const burstAt=.56,popped=sp>=8+burstAt;
-  const bo=sp<6.6?0:popped?0:1;
-  nodes.balloon.o=bo;nodes.tetherTop.o=bo;
-  const swell=sp<8?1:1+.10*smooth(.25,burstAt,u8);nodes.balloon.s=[swell,swell,swell*1.0];
+  const bo=sp<6.6?0:1;const gone=sp>=9?0:1-smooth(burstAt+.12,burstAt+.30,u8);
+  nodes.balloon.o=bo*(popped?gone:1);nodes.tetherTop.o=bo*(popped?gone:1);
+  const swell=sp<8?1:1+.10*smooth(.25,burstAt,u8);nodes.balloon.s=[swell,swell,swell];
+  const tear=sp<8+burstAt?0:sp>=9?1:smooth(burstAt,burstAt+.10,u8);const tk=tear.toFixed(3);
+  if(tk!==FL.bkey){FL.bkey=tk;reup(FL.bal,balloonGeo(tear));}
   // shreds fly out and fall
   const k=sp<8+burstAt||sp>=9?-1:(u8-burstAt)/(1-burstAt);
   nodes.shreds.o=k>0&&k<1?1-smooth(.6,1,k):0;
@@ -1166,12 +1168,11 @@ function flight(sp,st){
   let m=0;if(sp>=8+burstAt&&sp<9){m=.35*smooth(burstAt+.01,.66,u8)+.65*smooth(.66,.92,u8);}else if(sp>=9)m=1;
   const flut=m>0&&m<1?4*m*(1-m):(m>=1&&sp<10.8?.08:0);
   const c=sp>=10?smooth(.80,.99,u10)+(sp>=11?1:0):0;const cc=Math.min(1,c);
-  nodes.chute.o=sp<6.6?0:1;nodes.riser.o=sp<6.6?0:1-smooth(.85,1,cc);
-  nodes.chute.s=[1+.12*cc,1+.12*cc,lerp(1,.06,ease(cc))];
-  nodes.chute.p=[-40*ease(cc),250*ease(cc),-(FL.cf[2]-6)*ease(cc)];
+  nodes.chute.o=sp<6.6?0:1;nodes.riser.o=sp<6.6?0:1;
+  nodes.chute.s=[1,1,1];nodes.chute.p=[0,0,0];
   const key=[m.toFixed(3),cc.toFixed(3),flut>0?(time*30|0):0].join();
   if(key!==FL.ckey){FL.ckey=key;reup(FL.cA,canopyGeo(m,cc,0,flut));reup(FL.cB,canopyGeo(m,cc,1,flut));reup(FL.cL,canopyGeo(m,cc,2,flut));
-    const cfL=[FL.cf[0]+nodes.chute.p[0],FL.cf[1]+nodes.chute.p[1],FL.cf[2]+nodes.chute.p[2]];reup(FL.rs,riserGeo(cfL));}
+    reup(FL.rs,riserGeo(cc>0?cfAt(cc):FL.cf));}
   // free-fall jolt between burst and the canopy opening, and gentle swing under the canopy
   const drop=sp>=8&&sp<9?-170*smooth(burstAt,.66,u8)*(1-smooth(.72,.9,u8)):0;
   // landing: punch through a cloud layer, then come down onto the desk
@@ -1184,30 +1185,59 @@ function flight(sp,st){
   FL.u8=sp>=8&&sp<9?u8:-1;
 }
 const CG=16,CST=10;
-function canopyGeo(m,drape,mode,flut){ // m: 0 closed bag, .35 streamer, 1 open; drape: 0..1 deflating on the desk
-  const g=new Geo();const cf=FL.cf||[-6,-6,426.7];const X=cf[0],Y=cf[1];
+const LANDDIR=2.25,DRIFT=[-70,240];
+function cfAt(c){const cf=FL.cf;const e=ease(c);const cd=[cf[0]+DRIFT[0]*.45,cf[1]+DRIFT[1]*.45,4];return [lerp(cf[0],cd[0],e),lerp(cf[1],cd[1],e),lerp(cf[2],cd[2],Math.pow(e,1.4))];}
+function canopyGeo(m,drape,mode,flut){ // m: 0 closed bag, .35 streamer, 1 open; drape: 0..1 settling on the desk
+  const g=new Geo();const cf=FL.cf||[-6,-6,426.7];const X=cf[0],Y=cf[1];const cfNow=drape>0?cfAt(drape):cf;
   const shape=(q,ph)=>{const bag=[14+30*q,830-230*q],str=[10+24*q,920-360*q],
       opn=[230*Math.sin(q*Math.PI/2)*(1+.05*Math.sin((ph*CG/(2*Math.PI))%1*Math.PI)),cf[2]+360-120*(1-Math.cos(q*Math.PI/2))];
     let r,z;if(m<.35){const t=m/.35;r=lerp(bag[0],str[0],t);z=lerp(bag[1],str[1],t);}else{const t=ease((m-.35)/.65);r=lerp(str[0],opn[0],t);z=lerp(str[1],opn[1],t);}
     r*=1+flut*.14*Math.sin(ph*5+q*7+time*19)+.06*Math.sin(ph*CG)*(1-Math.min(1,m*2));         // flutter while filling, folds when closed
-    r*=1+drape*(.10+.06*Math.sin(ph*CG*.5+q*5));z=lerp(z,cf[2]+60*(1-q)*.5,drape*.0);
-    return [X+Math.cos(ph)*r,Y+Math.sin(ph)*r,z];};
-  if(mode===2){for(let k=0;k<CG;k++){const ph=k/CG*Math.PI*2;lineSeg(g,shape(1,ph),cf,.45);}return g;}
+    let P=[X+Math.cos(ph)*r,Y+Math.sin(ph)*r,z];
+    if(drape>0){ // the side facing LANDDIR touches down first, the rest folds over it unevenly
+      const side=.5+.5*Math.cos(ph-LANDDIR),fold=Math.sin(ph*3.1+q*5.7+1.3)*.5+Math.sin(ph*7.3-q*9.1)*.3+Math.sin(ph*13.7+q*2.3)*.2;
+      const delay=.38*(1-side)+.12*(hsh(Math.round(ph*40),3)),cv=ease(clamp((drape-delay)/(1-delay),0,1));
+      const sinkE=ease(Math.min(1,drape*1.25));const fall=[P[0]+DRIFT[0]*sinkE,P[1]+DRIFT[1]*sinkE,P[2]-(cf[2]-40)*Math.pow(sinkE,1.3)*.55];
+      const cx=cf[0]+DRIFT[0],cy=cf[1]+DRIFT[1],rd=300*q*(.78+.5*side)+22*fold*q,pa=ph+.25*fold*q+.4*(1-side)*q;
+      const flat=[cx+Math.cos(pa)*rd,cy+Math.sin(pa)*rd,1.5+Math.max(0,fold+.3)*16*(1-q*.6)+(1-side)*10*q];
+      P=[lerp(fall[0],flat[0],cv),lerp(fall[1],flat[1],cv),Math.max(1,lerp(fall[2],flat[2],cv))];}
+    return P;};
+  if(mode===2){for(let k=0;k<CG;k++){const ph=k/CG*Math.PI*2;const a=shape(1,ph);const mid=drape>0?[ (a[0]+cfNow[0])/2+(hsh(k,9)-.5)*40*drape,(a[1]+cfNow[1])/2+(hsh(k,8)-.5)*40*drape,lerp((a[2]+cfNow[2])/2,2,drape)]:null;
+      if(mid){lineSeg(g,a,mid,.45);lineSeg(g,mid,cfNow,.45);}else lineSeg(g,a,cfNow,.45);}return g;}
   for(let k=0;k<CG;k++){if((k%2)!==mode)continue;const o=g.v.length/8;
     for(let a=0;a<=CST;a++){const q=a/CST;for(let b=0;b<=4;b++){const ph=(k+b/4)/CG*Math.PI*2;g.vert(shape(q,ph),[0,0,1]);}}
     for(let a=0;a<CST;a++)for(let b=0;b<4;b++){const i0=o+a*5+b,i1=i0+5;g.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}}
-  // smooth normals from the triangles
-  const v=g.v,n=new Float32Array(v.length/8*3);for(let i=0;i<g.i.length;i+=3){const a=g.i[i],b=g.i[i+1],c=g.i[i+2];
+  return smoothNormals(g);}
+function smoothNormals(g){const v=g.v,n=new Float32Array(v.length/8*3);for(let i=0;i<g.i.length;i+=3){const a=g.i[i],b=g.i[i+1],c=g.i[i+2];
     const pa=[v[a*8],v[a*8+1],v[a*8+2]],pb=[v[b*8],v[b*8+1],v[b*8+2]],pc=[v[c*8],v[c*8+1],v[c*8+2]];const fn=cross(sub(pb,pa),sub(pc,pa));
     for(const x of [a,b,c]){n[x*3]+=fn[0];n[x*3+1]+=fn[1];n[x*3+2]+=fn[2];}}
-  for(let x=0;x<n.length/3;x++){const q=norm([n[x*3],n[x*3+1],n[x*3+2]]);v[x*8+3]=q[0];v[x*8+4]=q[1];v[x*8+5]=q[2];}
-  return g;}
+  for(let x=0;x<n.length/3;x++){const q=norm([n[x*3],n[x*3+1],n[x*3+2]]);v[x*8+3]=q[0];v[x*8+4]=q[1];v[x*8+5]=q[2];}return g;}
+const hsh=(a,b)=>{const x=Math.sin(a*127.1+b*311.7)*43758.5453;return x-Math.floor(x);};
+function balloonGeo(b){ // b: 0 intact .. 1 torn strips snapped back around the neck
+  const g=new Geo(),C=[-6,-6,1130],RB=240,S=30,RING=22,HZ=1.12,N=[C[0],C[1],C[2]-RB*HZ];
+  for(let k=0;k<S;k++){const rk=.65+.7*hsh(k,1),tw=(hsh(k,2)-.5)*1.4;const bb=Math.min(1,b*rk*1.35);
+    const w=b>0?(1-.5*bb)*(.7+.5*hsh(k,3)):1;const ph0=k/S*Math.PI*2,ph1=ph0+w/S*Math.PI*2;const o=g.v.length/8;
+    for(let a=0;a<=RING;a++){const th=a/RING*Math.PI;
+      for(let j=0;j<=2;j++){let ph=lerp(ph0,ph1,j/2);
+        const jag=b>0?(hsh(k*31+a,j)-.5)*.10*bb:0;ph+=jag;
+        const sx=Math.sin(th)*Math.cos(ph),sy=Math.sin(th)*Math.sin(ph),cz=Math.cos(th);const taper=cz<0?1-.32*Math.pow(-cz,3):1;
+        let P=[sx*RB*taper,sy*RB*taper,cz*RB*HZ+RB*HZ]; // relative to the neck
+        if(b>0){ // tear from the top: strip shrinks back (latex snaps) and peels outward and down around the neck
+          const along=1-th/Math.PI,len=lerp(1,.16+.12*hsh(k,4),bb);P=P.map(v=>v*len);
+          const ang=bb*(2.4+.8*hsh(k,5))*Math.pow(along,.7);const ax=[-Math.sin(ph+tw*bb),Math.cos(ph+tw*bb),0];
+          const ca=Math.cos(ang),sa=Math.sin(ang);const d=dot(ax,P);const cr=cross(ax,P);
+          P=[P[0]*ca+cr[0]*sa+ax[0]*d*(1-ca),P[1]*ca+cr[1]*sa+ax[1]*d*(1-ca),P[2]*ca+cr[2]*sa+ax[2]*d*(1-ca)];
+          const curl=bb*bb*18*Math.sin(along*9+k);P[2]+=curl-bb*30*along;}
+        g.vert([N[0]+P[0],N[1]+P[1],N[2]+P[2]],b>0?[0,0,1]:norm([sx,sy,cz*.9]));}}
+    for(let a=0;a<RING;a++)for(let j=0;j<2;j++){const i0=o+a*3+j,i1=i0+3;g.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}}
+  g.cyl(N[0],N[1],N[2]-10,9,6,22,'z',20);
+  return b>0?smoothNormals(g):g;}
 function riserGeo(top){const g=new Geo();lineSeg(g,FL.apex||[-6,-6,316.7],top,.6);return g;}
 function shredGeo(k){const g=new Geo();const C=[-6,-6,1130];
   for(let i=0;i<FL.dirs.length;i++){const [d,sp,w]=FL.dirs[i];const r=250+760*k*sp;
     const P=[C[0]+d[0]*r,C[1]+d[1]*r,C[2]+d[2]*r*1.1-1500*k*k];
     let a=norm(cross(d,Math.abs(d[2])<.95?[0,0,1]:[1,0,0])),b=cross(d,a);const an=k*12*w;const ca=Math.cos(an),sa=Math.sin(an);
-    const A=[a[0]*ca+b[0]*sa,a[1]*ca+b[1]*sa,a[2]*ca+b[2]*sa],B=cross(d,A);const s1=34*(.6+w*.6),s2=16*(.6+w*.6);
+    const A=[a[0]*ca+b[0]*sa,a[1]*ca+b[1]*sa,a[2]*ca+b[2]*sa],B=cross(d,A);const s1=16*(.5+w*.8),s2=7*(.5+w*.8);
     const q=(x,y)=>[P[0]+A[0]*x+B[0]*y,P[1]+A[1]*x+B[1]*y,P[2]+A[2]*x+B[2]*y];
     g.quadA(q(-s1,-s2),q(s1,-s2),q(s1,s2),q(-s1,s2),d);}
   return g;}
@@ -1221,13 +1251,8 @@ function deskTex(){const w=2048,h=1024;const c=document.createElement('canvas');
 function buildFlight(){
   // balloon (latex, slightly teardrop) + the line up to it
   node('balloon','root');nodes.balloon.pivot=[-6,-6,1130];node('tetherTop','root');node('chute','root');nodes.chute.pivot=[-6,-6,330+DZT+110];node('shreds','root');
-  let g=new Geo();const C=[-6,-6,1130],RB=240;const SEG=48,RING=32;const o0=g.v.length/8;
-  for(let a=0;a<=RING;a++){const th=a/RING*Math.PI;for(let b=0;b<=SEG;b++){const ph=b/SEG*Math.PI*2;
-    const sx=Math.sin(th)*Math.cos(ph),sy=Math.sin(th)*Math.sin(ph),cz=Math.cos(th);const taper=cz<0?1-.32*Math.pow(-cz,3):1;
-    g.vert([C[0]+sx*RB*taper,C[1]+sy*RB*taper,C[2]+cz*RB*1.12],norm([sx,sy,cz*.9]));}}
-  for(let a=0;a<RING;a++)for(let b=0;b<SEG;b++){const i0=o0+a*(SEG+1)+b,i1=i0+SEG+1;g.i.push(i0,i1,i0+1,i0+1,i1,i1+1);}
-  g.cyl(-6,-6,1130-RB*1.12-10,9,6,22,'z',20);
-  add('balloon',g,{c:[.86,.85,.82],r:.42,m:0});
+  let g;const RB=240;
+  FL.bal=upload(balloonGeo(0));drawList.push({node:nodes.balloon,mesh:FL.bal,mat:{c:[.86,.85,.82],r:.42,m:0}});FL.bkey=-1;
   const apex=[-6,-6,330+DZT];FL.apex=apex;FL.cf=[apex[0],apex[1],apex[2]+110];
   g=new Geo();lineSeg(g,[-6,-6,860],[-6,-6,1130-RB*1.12-18],.8);add('tetherTop',g,'white');
   // parachute: shape is rebuilt each frame from a morph (closed bag -> streamer -> open dome -> deflated on the desk)
@@ -1236,7 +1261,7 @@ function buildFlight(){
   node('riser','root');FL.rs=upload(riserGeo(FL.cf));drawList.push({node:nodes.riser,mesh:FL.rs,mat:{c:[.85,.85,.82],r:.6,m:0}});
   // balloon shreds (rebuilt per frame while they fly)
   FL.dirs=[];let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
-  for(let i=0;i<44;i++){const z=rnd()*2-1,ph=rnd()*Math.PI*2,r=Math.sqrt(1-z*z);FL.dirs.push([[r*Math.cos(ph),r*Math.sin(ph),z],.6+rnd()*.8,rnd()]);}
+  for(let i=0;i<22;i++){const z=rnd()*2-1,ph=rnd()*Math.PI*2,r=Math.sqrt(1-z*z);FL.dirs.push([[r*Math.cos(ph),r*Math.sin(ph),z],.6+rnd()*.8,rnd()]);}
   FL.shredMesh=upload(shredGeo(.01));drawList.push({node:nodes.shreds,mesh:FL.shredMesh,mat:{c:[.86,.85,.82],r:.5,m:0}});FL.lastK=-1;
   // the desk it lands on
   node('desk');const dt=deskTex();g=new Geo();g.quadA([-1300,-620,0],[1100,-620,0],[1100,820,0],[-1300,820,0],[0,0,1],[[0,1],[1,1],[1,0],[0,0]]);
